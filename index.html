@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memeatro - Balatro Meme Edition</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <button id="btn-mudo" title="Ativar/Desativar Som" onclick="alternarMudo()">🔊</button>
+    <button id="btn-config" title="Configurações" onclick="abrirConfiguracoes()">⚙️</button>
+
+    <div id="overlay-configuracoes">
+        <div class="config-painel">
+            <div class="config-header">
+                <div class="config-titulo">⚙️ Configurações</div>
+                <button id="btn-fechar-config" onclick="fecharConfiguracoes()">✕</button>
+            </div>
+
+            <div class="config-secao">
+                <div class="config-secao-titulo">🎨 Tema</div>
+                <div class="config-opcoes-tema">
+                    <button class="btn-tema" data-tema="escuro" onclick="mudarTema('escuro')">🌙 Escuro</button>
+                    <button class="btn-tema" data-tema="claro" onclick="mudarTema('claro')">☀️ Claro</button>
+                </div>
+            </div>
+
+            <div class="config-secao">
+                <div class="config-secao-titulo">🔊 Som</div>
+                <div class="config-linha">
+                    <label for="slider-musica">Música</label>
+                    <input type="range" id="slider-musica" min="0" max="100" value="50" oninput="ajustarVolumeMusica(this.value)">
+                </div>
+                <div class="config-linha">
+                    <label for="slider-sfx">Efeitos Sonoros</label>
+                    <input type="range" id="slider-sfx" min="0" max="100" value="70" oninput="ajustarVolumeSfx(this.value)">
+                </div>
+                <div class="config-linha">
+                    <label for="check-mudo">Mudo Geral</label>
+                    <input type="checkbox" id="check-mudo" onchange="alternarMudo()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tela-loading" class="tela">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-msg">CARREGANDO MEMES...</div>
+    </div>
+
+    <div id="tela-menu" class="tela ativo">
+        <div class="menu-container">
+            <h1>🃏 MEMEATRO 🃏</h1>
+            <p>O Balatro focado nos memes da call</p>
+            <button id="btn-iniciar" class="btn-menu">Iniciar Noite de Jogos</button>
+        </div>
+    </div>
+
+    <div id="tela-partida" class="tela">
+        <!-- 📊 BOTÃO E PAINEL FLUTUANTE: COLA DE MÃOS (ESTILO BALATRO) -->
+<div id="wrapper-cola-maos">
+    <button id="btn-cola-maos">📋 VER MÃOS</button>
+    <div id="painel-cola-maos">
+        <div class="titulo-cola">📊 GUIA DE MÃOS (META DO JOGO)</div>
+        <div id="lista-maos-cola">
+            <!-- Gerado dinamicamente pelo JS -->
+        </div>
+    </div>
+</div>
+        <div id="game-table">
+            
+            <div id="side-panel">
+                <div class="panel-section">
+                    <div class="section-title">Ante</div>
+                    <div class="big-value" id="lbl-round">1</div>
+                    <div class="ante-nome" id="lbl-round-nome">Call Começando</div>
+                </div>
+                <div class="panel-section" style="border-color: #ef4444;">
+                    <div class="section-title" style="color: #f87171;">Meta de Pontos</div>
+                    <div class="big-value" id="lbl-target" style="color: #f87171;">800</div>
+                </div>
+                <div class="panel-section" style="border-color: #10b981;">
+                    <div class="section-title" style="color: #34d399;">Sua Pontuação</div>
+                    <div class="big-value" id="lbl-score" style="color: #34d399;">0</div>
+                </div>
+                
+                <div class="panel-section" style="border-color: #fbbf24;">
+                    <div class="section-title" style="color: #fbbf24;">Mão Detectada</div>
+                    <div id="lbl-mao-detectada" style="font-size: 1rem; font-weight: bold; color: var(--cor-texto); margin-top: 4px; text-transform: uppercase;">Nenhuma</div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="section-title">Calculadora Meme</div>
+                    <div class="score-box">
+                        <span class="big-value chips-text" id="calc-chips">0</span>
+                        <span style="color:#94a3b8; font-size:1.2rem; font-weight:bold;"> X </span>
+                        <span class="big-value mult-text" id="calc-mult">+0</span>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <div class="section-title">Recursos</div>
+                    <div style="display:flex; justify-content:space-around; margin-top:5px; font-weight:bold; font-size: 0.9rem;">
+                        <span style="color:#f59e0b;">🪙 <span id="lbl-money">4</span></span>
+                        <span style="color:#22c55e;">✋ <span id="lbl-hands">4</span></span>
+                        <span style="color:#38bdf8;">🃏 <span id="lbl-discards">3</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="main-area">
+                <div id="jokers-area"></div>
+                
+                <div id="table-surface">
+                    <div class="mesa-jogada-atual" id="mesa-jogada-container"></div>
+                    <div id="hand-container"></div>
+                </div>
+            </div>
+
+            <div id="control-bar">
+                <div style="font-size:0.8rem; color:#64748b; width: 200px;">
+                    Cartas no deck: <span id="lbl-deck-count">0</span>
+                </div>
+                <div id="log-msg">Selecione as cartas para pontuar!</div>
+                <div class="btn-group">
+                    <button id="btn-discard">Descartar</button>
+                    <button id="btn-play">Jogar Mão</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="tela-loja" class="tela">
+        <div class="shop-container">
+            <div class="shop-header">
+                <div class="shop-title">🛒 Loja de Memes da Call</div>
+                <div class="shop-controles">
+                    <button id="btn-reroll" onclick="rerollLoja()">🔄 Atualizar Loja (🪙 <span id="lbl-reroll-cost">3</span>)</button>
+                    <div>Seu Dinheiro: 🪙 <span id="shop-money">0</span></div>
+                </div>
+            </div>
+            <div class="shop-items" id="shop-items-container"></div>
+            <div style="text-align: right; margin-top: 16px; flex-shrink: 0;">
+                <button id="btn-proximo-round">Próxima Partida</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tela-resultado" class="tela">
+        <div class="resultado-container">
+            <h1>🏆 ANTE CONCLUÍDO!</h1>
+            <div class="resultado-subtitulo" id="resultado-nome-ante"></div>
+            <div class="resultado-linhas" id="resultado-linhas"></div>
+            <div class="resultado-total">Total Recebido: <span id="resultado-total-valor">🪙 0</span></div>
+            <button id="btn-continuar-loja" class="btn-menu">Ir para a Loja</button>
+        </div>
+    </div>
+
+    <div id="tela-gameover" class="tela">
+        <div class="menu-container" style="border-color: #ef4444;">
+            <h1 style="color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.3);">FIM DE PAPO 💀</h1>
+            <p>A meta era muito alta e o seu deck faliu a call.</p>
+            <p style="font-size: 1.2rem; margin: 20px 0;">Pontuação Máxima Alcançada: <span id="lbl-final-score" style="color: #10b981; font-weight: bold;">0</span></p>
+            <button id="btn-restart" class="btn-menu" style="background: #ef4444;">Tentar Novamente</button>
+        </div>
+    </div>
+
+  <div id="overlay-booster">
+    <div style="color: #c084fc; font-weight: bold; margin-bottom: 20px; font-size: 1.2rem; letter-spacing: 2px;" id="txt-titulo-booster">CLIQUE NO PACOTE PARA RASGAR!</div>
+    
+    <div class="pacote-gacha" id="pack-clicavel" onclick="dispararAnimacaoPack()"></div>
+    
+    <div class="cartas-reveladas-container" id="booster-cartas-spawn"></div>
+    
+    <button id="btn-fechar-booster" onclick="fecharOverlayBooster()">Adicionar ao Baralho & Fechar</button>
+</div>
+<!-- Overlay do Seletor de Carta para os Kits de Upgrade -->
+<div id="overlay-upgrade">
+    <div class="upgrade-painel">
+        <div class="upgrade-titulo" id="txt-titulo-upgrade">Escolha uma carta</div>
+        <div class="upgrade-grid" id="grid-upgrade-cartas"></div>
+    </div>
+</div>
+<!-- Container do Tooltip Dinâmico de Imagens -->
+<div id="preview-imagem-mao">
+    <img id="img-tooltip-src" src="" alt="Preview">
+    <div class="legenda-preview" id="txt-tooltip-legenda">Exemplo</div>
+</div>
+    <script src="js/audio.js"></script>
+    <script src="js/cartas.js"></script>
+    <script src="js/loja.js"></script>
+    <script src="js/jogo.js"></script>
+</body>
+</html>

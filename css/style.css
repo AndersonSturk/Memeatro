@@ -1,0 +1,1343 @@
+/* =========================================================================
+   🎨 VARIÁVEIS DE TEMA (claro/escuro) — trocadas via [data-tema] no <html>
+   ========================================================================= */
+:root,
+html[data-tema="escuro"] {
+    --cor-fundo: #0b0f19;
+    --cor-fundo-alt: #020617;
+    --cor-painel: #1e293b;
+    --cor-painel-alt: #0f172a;
+    --cor-borda: #334155;
+    --cor-borda-suave: #1e293b;
+    --cor-texto: #f1f5f9;
+    --cor-texto-suave: #94a3b8;
+    --cor-texto-fraco: #64748b;
+    --cor-overlay-suave: rgba(15, 23, 42, 0.6);
+    --cor-tabuleiro-bg: rgba(0, 0, 0, 0.25);
+}
+html[data-tema="claro"] {
+    --cor-fundo: #e2e8f0;
+    --cor-fundo-alt: #f8fafc;
+    --cor-painel: #ffffff;
+    --cor-painel-alt: #f1f5f9;
+    --cor-borda: #cbd5e1;
+    --cor-borda-suave: #e2e8f0;
+    --cor-texto: #0f172a;
+    --cor-texto-suave: #475569;
+    --cor-texto-fraco: #64748b;
+    --cor-overlay-suave: rgba(203, 213, 225, 0.5);
+    --cor-tabuleiro-bg: rgba(15, 23, 42, 0.05);
+}
+
+/* =========================================================================
+   🌐 CONFIGURAÇÕES GERAIS E RESETS
+   ========================================================================= */
+* {
+    box-sizing: border-box;
+    user-select: none;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* =========================================================================
+   🔊 BOTÃO DE MUDO (fixo, visível em qualquer tela)
+   ========================================================================= */
+#btn-mudo {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 999999;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 2px solid #334155;
+    color: #f1f5f9;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+#btn-mudo:hover {
+    transform: scale(1.1);
+    border-color: #fbbf24;
+}
+
+#btn-config {
+    position: fixed;
+    top: 14px;
+    right: 64px;
+    z-index: 999999;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 2px solid #334155;
+    color: #f1f5f9;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+#btn-config:hover {
+    transform: scale(1.1) rotate(30deg);
+    border-color: #fbbf24;
+}
+
+/* =========================================================================
+   ⚙️ MODAL DE CONFIGURAÇÕES
+   ========================================================================= */
+#overlay-configuracoes {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(2, 6, 23, 0.85);
+    z-index: 999998;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.config-painel {
+    background: var(--cor-painel, #1e293b);
+    border: 3px solid #4b5563;
+    border-radius: 16px;
+    padding: 25px 30px;
+    width: 380px;
+    max-width: 90vw;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    animation: slideUp 0.35s ease-out;
+}
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #374151;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+.config-titulo {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #fbbf24;
+}
+#btn-fechar-config {
+    background: none;
+    border: none;
+    color: var(--cor-texto, #f1f5f9);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+#btn-fechar-config:hover { color: #ef4444; }
+.config-secao { margin-bottom: 22px; }
+.config-secao:last-child { margin-bottom: 0; }
+.config-secao-titulo {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+}
+.config-opcoes-tema {
+    display: flex;
+    gap: 10px;
+}
+.btn-tema {
+    flex: 1;
+    padding: 10px;
+    background: #0f172a;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    color: var(--cor-texto, #f1f5f9);
+    font-weight: bold;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.btn-tema:hover { transform: translateY(-2px); }
+.btn-tema.ativo {
+    border-color: #fbbf24;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+}
+.config-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    color: var(--cor-texto, #f1f5f9);
+}
+.config-linha:last-child { margin-bottom: 0; }
+.config-linha input[type="range"] {
+    flex: 1;
+    max-width: 180px;
+    accent-color: #fbbf24;
+}
+.config-linha input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #fbbf24;
+}
+
+/* =========================================================================
+   🎬 TELAS E GERENCIAMENTO DE FLUXO (ESTRUTURA)
+   ========================================================================= */
+.tela { 
+    display: none; 
+    width: 100%; 
+    height: 100vh; 
+    justify-content: center; 
+    align-items: center; 
+    opacity: 0; 
+    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; 
+    transform: scale(0.98);
+}
+.tela.ativo { 
+    display: flex; 
+    opacity: 1; 
+    transform: scale(1); 
+}
+
+#tela-loading { 
+    background-color: rgba(2, 6, 23, 0.98); 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    z-index: 99999; 
+    display: none; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+}
+.spinner { 
+    width: 60px; 
+    height: 60px; 
+    border: 6px solid #1e293b; 
+    border-top: 6px solid #fbbf24; 
+    border-radius: 50%; 
+    animation: spin 1s linear infinite; 
+    margin-bottom: 20px; 
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); 
+}
+.loading-text { 
+    font-size: 1.1rem; 
+    font-weight: bold; 
+    color: #94a3b8; 
+    letter-spacing: 0.12em; 
+    text-align: center; 
+    padding: 0 20px; 
+    animation: pulse 1.5s ease-in-out infinite; 
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+/* =========================================================================
+   🖥️ COMPONENTES DE MENUS (MENU INICIAL / GAMEOVER)
+   ========================================================================= */
+.menu-container {
+    text-align: center;
+    background: var(--cor-painel);
+    color: var(--cor-texto);
+    padding: 40px 50px;
+    border-radius: 20px;
+    border: 3px solid var(--cor-borda);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    max-width: 90vw;
+    animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.menu-container h1 { 
+    font-size: 3.5rem; 
+    color: #fbbf24; 
+    margin-bottom: 10px; 
+    text-shadow: 0 0 15px rgba(251,191,36,0.4); 
+}
+.btn-menu { 
+    background: #10b981; 
+    color: white; 
+    border: none; 
+    padding: 15px 40px; 
+    font-size: 1.2rem; 
+    font-weight: bold; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    margin-top: 20px; 
+    transition: background 0.1s, transform 0.1s; 
+}
+.btn-menu:hover { 
+    background: #059669; 
+    transform: translateY(-2px); 
+}
+#tela-gameover {
+    background-color: var(--cor-fundo-alt);
+    flex-direction: column;
+}
+
+/* =========================================================================
+   🎴 TABULEIRO E PAINÉIS PRINCIPAIS DO JOGO
+   ========================================================================= */
+#game-table {
+    background: radial-gradient(circle, var(--cor-painel) 0%, var(--cor-painel-alt) 100%);
+    width: 96vw;
+    max-width: 1050px;
+    height: 94vh;
+    max-height: 680px;
+    border-radius: 20px;
+    border: 4px solid var(--cor-borda);
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: 1fr 55px;
+    gap: 15px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    overflow: hidden;
+}
+
+#side-panel {
+    grid-column: 1;
+    background: var(--cor-fundo-alt);
+    border-radius: 12px;
+    padding: 12px;
+    border: 2px solid var(--cor-borda-suave);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+}
+.panel-section {
+    background: var(--cor-painel-alt);
+    color: var(--cor-texto);
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda-suave);
+    text-align: center;
+}
+.section-title {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--cor-texto-suave);
+    margin-bottom: 2px;
+}
+.big-value {
+    font-size: 1.3rem;
+    font-weight: 800;
+    font-family: monospace;
+}
+.ante-nome {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--cor-texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-top: 2px;
+}
+.score-box { 
+    background: #000; 
+    border: 2px solid #38bdf8; 
+    border-radius: 6px; 
+    padding: 6px; 
+    margin-top: 2px; 
+}
+.chips-text { color: #38bdf8; }
+.mult-text { color: #e11d48; transition: color 0.2s; }
+
+/* =========================================================================
+   🔥 ESCALADA VISUAL DO MULTIPLICADOR EM VALORES ALTOS (ESTILO BALATRO)
+   ========================================================================= */
+/* Nível 1 (mult >= 8): esquenta e pulsa em laranja */
+.mult-text.mult-quente {
+    color: #fb923c !important;
+    animation: multQuentePulso 0.9s ease-in-out infinite;
+}
+@keyframes multQuentePulso {
+    0%, 100% { text-shadow: 0 0 6px rgba(251, 146, 60, 0.6); }
+    50% { text-shadow: 0 0 16px rgba(251, 146, 60, 0.95), 0 0 4px rgba(253, 224, 71, 0.9); }
+}
+
+/* Nível 2 (mult >= 20): pega fogo de verdade — gradiente animado + tremor */
+.mult-text.mult-fogo {
+    background: linear-gradient(90deg, #7f1d1d, #f97316, #fde047, #f97316, #7f1d1d);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.85));
+    animation: fogoGradiente 1.1s linear infinite, fogoTremor 0.5s ease-in-out infinite;
+}
+
+/* Nível 3 (mult >= 40): incêndio lendário — mais rápido, mais intenso */
+.mult-text.mult-lendario {
+    background: linear-gradient(90deg, #7f1d1d, #ef4444, #f97316, #fde047, #f97316, #ef4444, #7f1d1d);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    filter: drop-shadow(0 0 14px rgba(239, 68, 68, 0.95)) drop-shadow(0 0 6px rgba(253, 224, 71, 0.9));
+    animation: fogoGradiente 0.6s linear infinite, fogoTremor 0.3s ease-in-out infinite;
+}
+
+@keyframes fogoGradiente {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+}
+@keyframes fogoTremor {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.08) rotate(-1deg); }
+    50% { transform: scale(1.03) rotate(1deg); }
+    75% { transform: scale(1.1) rotate(-0.5deg); }
+}
+
+/* Quando o mult está em chamas, o próprio placar de cálculo ganha um brilho ambiente */
+.score-box.score-box-fogo {
+    border-color: #f97316;
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.5), inset 0 0 15px rgba(249, 115, 22, 0.15);
+}
+
+#main-area { 
+    grid-column: 2; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+    height: 100%; 
+    gap: 10px; 
+    min-height: 0; 
+}
+
+/* =========================================================================
+   🃏 ÁREA DE CURINGAS (JOKERS)
+   ========================================================================= */
+#jokers-area {
+    height: 95px;
+    background: var(--cor-overlay-suave);
+    border: 2px dashed var(--cor-borda);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    gap: 12px;
+}
+.joker-card {
+    width: 68px; 
+    height: 80px; 
+    background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+    border: 2px solid #f59e0b; 
+    border-radius: 6px; 
+    padding: 5px; 
+    font-size: 0.58rem; 
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+    animation: cardFloat 3s ease-in-out infinite alternate;
+}
+.joker-title { 
+    font-weight: bold; 
+    color: #fef08a; 
+    overflow: hidden; 
+    white-space: nowrap; 
+    text-overflow: ellipsis; 
+}
+.joker-desc { 
+    color: #fef08a; 
+    font-size: 0.48rem; 
+    line-height: 1.1; 
+    margin-top: 2px; 
+}
+
+/* =========================================================================
+   🟩 TAPETE DE JOGO E CONTEXTO DE MESA
+   ========================================================================= */
+#table-surface {
+    flex-grow: 1;
+    background: var(--cor-tabuleiro-bg);
+    border-radius: 12px;
+    border: 2px dashed var(--cor-borda);
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+    padding: 12px; 
+    gap: 10px; 
+    min-height: 0; 
+    width: 100%; 
+}
+
+.mesa-jogada-atual { 
+    height: 50%; 
+    width: 100%; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 12px; 
+    border-bottom: 1px dashed rgba(51, 65, 85, 0.2); 
+}
+
+#hand-container, #mesa-jogada-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    min-height: 180px;
+    width: 100%;
+}
+
+/* =========================================================================
+   🃏 SISTEMA DE CARTAS REDIMENSIONADO (ESTILO BALATRO COMPACTO)
+   ========================================================================= */
+.card {
+    width: 110px;
+    height: 165px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 2px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hover e Seleção */
+.card:hover {
+    transform: translateY(-10px) scale(1.04);
+    box-shadow: 0 10px 20px rgba(168, 85, 247, 0.4);
+}
+
+.card.selected {
+    border: 3px solid #bc6ff1;
+    transform: translateY(-20px);
+    box-shadow: 0 0 15px rgba(188, 111, 241, 0.8);
+}
+
+/* 🔧 Destaque para cartas melhoradas por Kits de Upgrade */
+.card.card-upgraded {
+    border: 2px solid #38bdf8;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+}
+
+/* 🎬 Entrada das cartas ao serem compradas (dealing) — só as recém-dadas ganham a classe via JS */
+.card.carta-entrando {
+    animation: cartaEntrando 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+@keyframes cartaEntrando {
+    from { opacity: 0; transform: translateY(50px) scale(0.8) rotate(-4deg); }
+    to { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+/* 🎬 Saída das cartas da mesa ao confirmar "Jogar Mão" */
+.card.carta-saindo {
+    animation: cartaSaindo 0.45s ease-in forwards;
+    pointer-events: none;
+}
+@keyframes cartaSaindo {
+    0% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(-70px) scale(0.6) rotate(10deg); }
+}
+
+/* 🚫 Feedback de ação inválida (jogar/descartar sem seleção, sem grana na loja) */
+.shake-erro { animation: shakeErro 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+@keyframes shakeErro {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-7px); }
+    40%, 60% { transform: translateX(7px); }
+}
+
+/* 📈 Pulso rápido em qualquer valor numérico que acabou de mudar */
+.valor-pop { animation: popValor 0.28s ease-out; }
+@keyframes popValor {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+}
+
+/* 🏷️ SELO DE VALOR (Chips / Mult) no canto da carta */
+.card-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    z-index: 2;
+}
+.card-badge .badge-chips {
+    background: #1d4ed8;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+.card-badge .badge-mult {
+    background: #be123c;
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* 🏷️ TÍTULO DA CARTA */
+.card-name {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-align: center;
+    color: #0f172a;
+    min-height: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.1;
+    overflow: hidden;
+    white-space: normal;
+    text-overflow: clip;
+    word-break: break-word;
+}
+
+/* 🖼️ CONTAINER DA IMAGEM DO INTEGRANTE/MEME */
+.card-avatar {
+    width: 100%;
+    height: 80px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 💬 DESCRIÇÃO OU MEME NO RODAPÉ DO EMBLEMA */
+.card-meme {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #64748b;
+    text-align: center;
+    margin-top: 4px;
+    
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.1;
+    word-break: break-word;
+    
+    width: 100%;
+    min-height: 2.1rem;
+}
+
+/* =========================================================================
+   🎛️ BARRA DE CONTROLE INFERIOR DO JOGADOR
+   ========================================================================= */
+#control-bar {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    background: var(--cor-fundo-alt);
+    color: var(--cor-texto);
+    padding: 0 20px;
+    border-radius: 12px;
+    border: 2px solid var(--cor-borda-suave);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+}
+.btn-group { 
+    display: flex; 
+    gap: 12px; 
+}
+button { 
+    padding: 8px 18px; 
+    font-size: 0.85rem; 
+    font-weight: bold; 
+    border: none; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    transition: background 0.1s; 
+}
+#btn-play { background: #10b981; color: white; }
+#btn-discard { background: #ef4444; color: white; }
+#btn-ir-loja, #btn-proximo-round { background: #3b82f6; color: white; }
+#log-msg { color: #fbbf24; font-weight: bold; font-size: 0.9rem; text-align: center; flex-grow: 1; padding: 0 15px; }
+
+/* =========================================================================
+   🛒 CONTAINER DA VITRINE DA LOJA (SHOPPING PANEL)
+   ========================================================================= */
+.shop-container {
+    background: var(--cor-painel);
+    color: var(--cor-texto);
+    width: 95vw;
+    max-width: 1150px; /* Expandido para acomodar os Coringas do lado */
+    max-height: 90vh;
+    padding: 25px;
+    border-radius: 16px;
+    border: 3px solid var(--cor-borda);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    animation: slideUp 0.4s ease-out;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.shop-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 2px solid #374151;
+    padding-bottom: 12px;
+    flex-shrink: 0;
+}
+
+/* 📐 NOVO LAYOUT PRINCIPAL: 2 COLUNAS (LADO A LADO) */
+.shop-body {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    flex: 1;
+    min-height: 0; /* Impede transbordamento em telas menores */
+    overflow: hidden;
+}
+
+/* 🃏 COLUNA DA ESQUERDA: CORINGAS / JOKERS EQUIPADOS */
+.shop-jokers-side {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--cor-painel-alt);
+    border: 2px solid var(--cor-borda-suave);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.shop-jokers-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #fbbf24;
+    border-bottom: 1px solid var(--cor-borda-suave);
+    padding-bottom: 6px;
+}
+
+.shop-jokers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 4px;
+}
+
+/* 🏪 COLUNA DA DIREITA: VITRINE DE PRODUTOS */
+.shop-items {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    align-content: flex-start;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 6px;
+}
+
+.shop-items::-webkit-scrollbar,
+.shop-jokers-list::-webkit-scrollbar { width: 6px; }
+.shop-items::-webkit-scrollbar-track,
+.shop-jokers-list::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
+.shop-items::-webkit-scrollbar-thumb,
+.shop-jokers-list::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+.shop-item-card {
+    width: 100%; /* Adapta ao grid */
+    background: var(--cor-painel-alt);
+    border: 2px solid var(--cor-borda);
+    border-radius: 12px; 
+    padding: 15px; 
+    text-align: center; 
+    min-height: 220px; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+    transition: transform 0.2s, border-color 0.2s; 
+}
+.shop-item-card:hover { 
+    border-color: #fbbf24; 
+    transform: translateY(-2px); 
+}
+.shop-item-title { 
+    font-weight: bold; 
+    color: #fef08a; 
+    font-size: 1rem; 
+}
+.shop-item-desc {
+    font-size: 0.75rem;
+    color: var(--cor-texto-suave);
+    margin: 10px 0; 
+    flex-grow: 1; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    line-height: 1.2; 
+}
+.btn-buy { 
+    background: #fbbf24; 
+    color: #111827; 
+    width: 100%; 
+    padding: 10px; 
+    border-radius: 4px; 
+    font-weight: bold; 
+}
+#btn-reroll {
+    background: #374151;
+    color: #fbbf24;
+    border: 2px solid #4b5563;
+    font-weight: bold;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* =========================================================================
+   📦 SISTEMA DE ANIMAÇÃO DE BOOSTER PACKS (GACHA REVEAL OVERLAY)
+   ========================================================================= */
+#overlay-booster {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(2, 6, 23, 0.98) !important;
+    z-index: 999999 !important;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    perspective: 1200px;
+}
+
+.pacote-gacha {
+    width: 200px;
+    height: 280px;
+    background: linear-gradient(135deg, #a855f7 0%, #4c1d95 100%);
+    border: 4px solid #c084fc;
+    border-radius: 14px;
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    animation: packFloat 2s ease-in-out infinite alternate;
+    transform-style: preserve-3d;
+}
+
+.pacote-gacha::before {
+    content: "⚡ PACK ⚡";
+    font-weight: 900;
+    color: #fff;
+    font-size: 1.4rem;
+    letter-spacing: 3px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.pacote-gacha.explodir {
+    animation: packRip 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards !important;
+}
+
+.cartas-reveladas-container {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 18px;
+    row-gap: 20px;
+    margin-top: 30px;
+    min-height: 240px;
+    max-width: min(94vw, 980px);
+    justify-content: center;
+    align-items: center;
+}
+
+.carta-revelada {
+    opacity: 0;
+    transform: scale(0.3) rotateY(90deg);
+    animation: cardReveal 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    /* animation-delay é definido por carta via JS (dispararAnimacaoPack), pois a
+       quantidade de cartas por pacote agora varia entre 4 e 8. */
+}
+
+#btn-fechar-booster {
+    margin-top: 40px;
+    background: #a855f7;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    display: none;
+    font-size: 1.1rem;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+    transition: background 0.2s;
+}
+#btn-fechar-booster:hover {
+    background: #c084fc;
+}
+
+/* =========================================================================
+   📋 PAINEL FLUTUANTE DE COLA DE MÃOS (HOVER LATERAL SEGURO)
+   ========================================================================= */
+#wrapper-cola-maos {
+    position: fixed;
+    left: 0; /* Totalmente colado no canto esquerdo da tela */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    padding-left: 15px; /* Zona interna invisível para prender o mouse */
+}
+
+#btn-cola-maos {
+    background: #1e1b4b;
+    color: #fbbf24;
+    border: 2px solid #3b82f6;
+    border-radius: 0 8px 8px 0;
+    padding: 15px 8px;
+    font-weight: 900;
+    font-size: 0.75rem;
+    cursor: pointer;
+    writing-mode: vertical-lr;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 4px 4px 15px rgba(0,0,0,0.5);
+    transition: all 0.2s ease;
+}
+
+#painel-cola-maos {
+    position: absolute;
+    left: -420px;
+    width: 380px;
+    max-height: 85vh;
+    background: rgba(15, 23, 42, 0.98);
+    border: 3px solid #3b82f6;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    padding: 15px;
+    transition: left 0.25s ease-out;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+}
+
+/* Ativação por hover inteligente (Não fecha no vão morto) */
+#wrapper-cola-maos:hover #painel-cola-maos {
+    left: 45px;
+    pointer-events: auto;
+}
+
+#wrapper-cola-maos:hover #btn-cola-maos {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.titulo-cola {
+    color: #34d399;
+    font-weight: 900;
+    font-size: 0.9rem;
+    text-align: center;
+    border-bottom: 2px solid #1e293b;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+#lista-maos-cola {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-right: 5px;
+}
+
+.item-mao-cola {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    background: #020617;
+    border: 1px solid #1e293b;
+    font-size: 0.78rem;
+}
+.item-mao-cola:hover {
+    background: #1e1b4b;
+    border-color: #a855f7;
+}
+
+.nome-mao-cola {
+    font-weight: 800;
+    color: #f1f5f9;
+}
+
+.stats-mao-cola {
+    display: flex;
+    gap: 8px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.chips-blue-cola {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.mult-red-cola {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+#lista-maos-cola::-webkit-scrollbar { width: 6px; }
+#lista-maos-cola::-webkit-scrollbar-track { background: #020617; }
+#lista-maos-cola::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 3px; }
+
+/* =========================================================================
+   🖼️ TOOLTIP DE PREVIEW DA IMAGEM DA MÃO (BALATRO PREVIEWER)
+   ========================================================================= */
+#preview-imagem-mao {
+    position: fixed;
+    z-index: 100000;
+    width: 140px;
+    background: #0f172a;
+    border: 2px solid #a855f7;
+    border-radius: 8px;
+    padding: 5px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+    display: none;
+    pointer-events: none;
+    text-align: center;
+}
+
+#preview-imagem-mao img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+#preview-imagem-mao .legenda-preview {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    font-weight: bold;
+}
+
+/* =========================================================================
+   🏆 TELA DE RESULTADO (CASH OUT) — detalhamento do ouro ganho ao vencer o Ante
+   ========================================================================= */
+.resultado-container {
+    text-align: center;
+    background: var(--cor-painel);
+    color: var(--cor-texto);
+    padding: 35px 45px;
+    border-radius: 20px;
+    border: 3px solid #10b981;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    max-width: 90vw;
+    width: 420px;
+    animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.resultado-container h1 {
+    font-size: 2rem;
+    color: #34d399;
+    margin-bottom: 8px;
+    text-shadow: 0 0 15px rgba(52,211,153,0.4);
+}
+.resultado-subtitulo {
+    color: var(--cor-texto-suave);
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+.resultado-linhas {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.linha-resultado {
+    display: flex;
+    justify-content: space-between;
+    background: var(--cor-painel-alt);
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda-suave);
+    font-size: 0.85rem;
+    opacity: 0;
+    animation: linhaResultadoEntrando 0.4s ease-out forwards;
+    /* animation-delay é definido por linha via JS (mostrarTelaResultado), pra entrarem uma a uma */
+}
+.linha-resultado span:first-child { color: var(--cor-texto-suave); }
+.linha-resultado span:last-child { color: #fbbf24; font-weight: bold; font-family: monospace; }
+@keyframes linhaResultadoEntrando {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.resultado-total {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #fbbf24;
+    background: #000;
+    border: 2px solid #fbbf24;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 22px;
+    opacity: 0;
+    animation: totalResultadoEntrando 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation-delay: 0.6s;
+}
+@keyframes totalResultadoEntrando {
+    from { opacity: 0; transform: scale(0.7); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* =========================================================================
+   🔧 OVERLAY DO SELETOR DE CARTA (KITS DE UPGRADE)
+   ========================================================================= */
+#overlay-upgrade {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(2, 6, 23, 0.98);
+    z-index: 999999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+.upgrade-painel {
+    background: var(--cor-painel);
+    color: var(--cor-texto);
+    border: 3px solid #38bdf8;
+    border-radius: 16px;
+    padding: 25px;
+    max-width: 90vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+}
+.upgrade-titulo {
+    color: #38bdf8;
+    font-weight: 900;
+    font-size: 1.2rem;
+    text-align: center;
+    margin-bottom: 18px;
+}
+.upgrade-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 4px;
+}
+.upgrade-grid .card { cursor: pointer; }
+.upgrade-grid .card:hover {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(56, 189, 248, 0.5);
+}
+
+/* =========================================================================
+   🎞️ TIMELINES E MOTORES DE ANIMAÇÃO CORE (KEYFRAMES)
+   ========================================================================= */
+@keyframes slideUp { 
+    from { opacity: 0; transform: translateY(40px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+@keyframes cardFloat { 
+    0% { transform: translateY(0) rotate(0deg); } 
+    100% { transform: translateY(-4px) rotate(1deg); } 
+}
+@keyframes packFloat {
+    0% { transform: translateY(0) rotate(-1deg); }
+    100% { transform: translateY(-12px) rotate(1deg); filter: drop-shadow(0 0 25px rgba(168,85,247,0.9)); }
+}
+@keyframes packRip {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.2) rotate(8deg); filter: brightness(2) blur(1px); }
+    100% { transform: scale(0) rotate(-15deg); opacity: 0; }
+}
+@keyframes cardReveal {
+    0% { opacity: 0; transform: scale(0.4) rotateY(90deg); }
+    100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+}
+
+/* ✨ ESTILOS EXCLUSIVOS DO BOOSTER PRIME */
+
+/* Aura Dourada Piscante no Overlay quando abre o PRIME */
+.booster-prime-active {
+    background: radial-gradient(circle, rgba(234, 179, 8, 0.25) 0%, rgba(15, 23, 42, 0.95) 80%) !important;
+}
+
+/* Brilho Dourado Intenso na Carta/Pacote */
+.pack-gold-glow {
+    box-shadow: 0 0 25px #eab308, 0 0 50px rgba(234, 179, 8, 0.6) !important;
+    border: 3px solid #fde047 !important;
+    animation: pulsoDourado 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes pulsoDourado {
+    0% { transform: scale(1); box-shadow: 0 0 20px #eab308; }
+    100% { transform: scale(1.05); box-shadow: 0 0 40px #fde047, 0 0 60px #eab308; }
+}
+
+/* Efeito de Carta PRIME Revelada */
+.carta-revelada-prime {
+    border: 3px solid #fde047 !important;
+    box-shadow: 0 0 20px rgba(253, 224, 71, 0.8) !important;
+    animation: surgimentoLendario 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+@keyframes surgimentoLendario {
+    0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+    70% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Tremor na tela na hora da explosão */
+.shake-lendario {
+    animation: tremorTela 0.4s ease-in-out;
+}
+
+@keyframes tremorTela {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-6px, 6px); }
+    40% { transform: translate(6px, -6px); }
+    60% { transform: translate(-4px, -4px); }
+    80% { transform: translate(4px, 4px); }
+}
+
+/* =============================================================================
+   EFEITOS VISUAIS PARA CARTAS CRIA PRIME (DOURADO E HOLO)
+   ============================================================================= */
+
+/* Container base do card quando for da coleção Prime ou versão Prime */
+.card.cria-prime,
+.card[data-colecao="cria_prime"] {
+    position: relative;
+    border: 2px solid #ffd700 !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 215, 0, 0.4) !important;
+    background: linear-gradient(135deg, #2b2100 0%, #1a1500 100%) !important;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Efeito de brilho Dourado / Holográfico na imagem da carta */
+.card.cria-prime img,
+.card[data-colecao="cria_prime"] img {
+    filter: sepia(0.6) saturate(2.5) hue-rotate(-10deg) contrast(1.15) brightness(1.1);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+/* Overlay varrendo o card (Efeito metalizado/brilhante animado) */
+.card.cria-prime::before,
+.card[data-colecao="cria_prime"]::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 223, 0, 0.35) 48%,
+        rgba(255, 255, 255, 0.7) 50%,
+        rgba(255, 223, 0, 0.35) 52%,
+        transparent 70%
+    );
+    transform: rotate(25deg);
+    animation: brilhoDourado 3.5s infinite linear;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Animação do raio de luz cruzando a carta */
+@keyframes brilhoDourado {
+    0% {
+        transform: translate(-100%, -100%) rotate(25deg);
+    }
+    20% {
+        transform: translate(100%, 100%) rotate(25deg);
+    }
+    100% {
+        transform: translate(100%, 100%) rotate(25deg);
+    }
+}
+
+/* Aura Dourada ao passar o mouse ou selecionar */
+.card.cria-prime:hover,
+.card.cria-prime.selected,
+.card[data-colecao="cria_prime"]:hover {
+    box-shadow: 0 0 25px #ffd700, 0 0 40px #ffae00, inset 0 0 15px #ffe600 !important;
+    transform: translateY(-8px) scale(1.03);
+}
+
+/* Selo / Badge "PRIME" no canto do card */
+/* Ajuste de posição para a badge PRIME não atropelar o título da carta */
+.card.cria-prime::after,
+.card[data-colecao="cria_prime"]::after {
+    content: '👑 PRIME';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: linear-gradient(90deg, #ffd700, #ff8c00);
+    color: #000;
+    font-size: 0.55rem;
+    font-weight: 900;
+    padding: 1px 4px;
+    border-radius: 3px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.5px;
+    z-index: 10;
+}
