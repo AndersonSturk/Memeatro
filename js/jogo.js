@@ -8,7 +8,7 @@ let gameState = {
     round: 1,
     targetScore: 300,
     currentScore: 0,
-    money: 20,
+    money: 10,
     hands: 4,
     discards: 3,
     startingDiscards: 3,
@@ -21,7 +21,7 @@ let gameState = {
 };
 
 // 🎞️ Valores exibidos na tela para a animação de contagem estilo Balatro
-let valoresExibidos = { score: 0, money: 20 };
+let valoresExibidos = { score: 0, money: 10 };
 
 // 🎯 METAS DE PONTUAÇÃO POR ANTE
 const METAS_ANTE_BASE = { 
@@ -589,14 +589,14 @@ function initGame() {
     gameState.round = 1; 
     gameState.targetScore = obterMetaAnte(1); 
     gameState.currentScore = 0;
-    gameState.money = 20; 
+    gameState.money = 10; 
     gameState.hands = 4; 
     gameState.discards = 3; 
     gameState.startingDiscards = 3; 
     gameState.rerollCost = 3;
     gameState.ownedJokers = [];
     
-    valoresExibidos = { score: 0, money: 20 };
+    valoresExibidos = { score: 0, money: 10 };
 
     gameState.cartasDesbloqueadasRun = [];
     if (typeof POOL_INICIAL !== "undefined") {
