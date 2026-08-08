@@ -53,11 +53,11 @@ function gerarItensVitrine() {
         vitrineJokers = [];
     }
 
-    // 2. Sorteia 1 Booster Pack (Ajustado: Apenas 12% de chance de vir o PRIME Lendário)
+    // 2. Sorteia 1 Booster Pack
     const packsComuns = DADOS_PACKS.filter(p => !p.raro);
     const packPrime = DADOS_PACKS.find(p => p.raro);
     
-    if (packPrime && Math.random() < 0.12) { // 🎯 Reduzido de 35% para 12%
+    if (packPrime && Math.random() < 0.18) { // 🎯 Reduzido de 12% para 18%
         vitrinePacks = [{ ...packPrime }];
     } else {
         const packSorteado = sortearPackPonderado(packsComuns);
