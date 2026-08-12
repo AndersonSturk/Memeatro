@@ -807,6 +807,16 @@ button {
     color: #fef08a; 
     font-size: 1rem; 
 }
+.shop-item-title-only {
+    font-weight: bold;
+    color: #fef08a;
+    font-size: 1rem;
+    display: flex;
+    justify-content: center;
+}
+.shop-item-desc-hidden {
+    display: none;
+}
 .shop-item-desc {
     font-size: 0.75rem;
     color: var(--cor-texto-suave);
@@ -834,6 +844,9 @@ button {
     flex-shrink: 0;
 }
 
+#btn-abrir-altar {
+    background: #7f1d1d; color: #fca5a5; border: 2px solid #dc2626; font-weight: bold;
+}
 /* =========================================================================
    📦 SISTEMA DE ANIMAÇÃO DE BOOSTER PACKS (GACHA REVEAL OVERLAY)
    ========================================================================= */
@@ -1323,14 +1336,13 @@ button {
     transform: translateY(-8px) scale(1.03);
 }
 
-/* Selo / Badge "PRIME" no canto do card */
-/* Ajuste de posição para a badge PRIME não atropelar o título da carta */
+
 .card.cria-prime::after,
 .card[data-colecao="cria_prime"]::after {
     content: '👑 PRIME';
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: 4px;
+    left: 4px; /* Alterado de right para left para não atropelar a badge de Chips/Mult */
     background: linear-gradient(90deg, #ffd700, #ff8c00);
     color: #000;
     font-size: 0.55rem;

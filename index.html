@@ -41,6 +41,17 @@
                     <input type="checkbox" id="check-mudo" onchange="alternarMudo()">
                 </div>
             </div>
+
+            <div class="config-secao">
+                <div class="config-secao-titulo">Jogo Salvo</div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btn-exportar-save" style="flex: 1; padding: 10px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Exportar Save</button>
+                    <button id="btn-importar-save-config" style="flex: 1; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Importar Save</button>
+                </div>
+                <p style="font-size: 0.7rem; color: #94a3b8; text-align: center; margin-top: 8px;">
+                    Exporte seu progresso para um arquivo e importe depois para continuar de onde parou.
+                </p>
+            </div>
         </div>
     </div>
 
@@ -54,6 +65,7 @@
             <h1>🃏 MEMEATRO 🃏</h1>
             <p>O Balatro focado nos memes da call</p>
             <button id="btn-iniciar" class="btn-menu">Iniciar Noite de Jogos</button>
+            <button id="btn-importar-save-menu" class="btn-menu" style="background-color: #3b82f6; margin-left: 10px;">Importar Save</button>
         </div>
     </div>
 
@@ -136,6 +148,8 @@
             <div class="shop-header">
                 <div class="shop-title">🛒 Loja de Memes da Call</div>
                 <div class="shop-controles">
+                    <button id="btn-abrir-altar" onclick="abrirAltarDeFusao()">🔥 Altar de Fusão</button>
+                    <button id="btn-abrir-sacrificio" style="background: #991b1b; color: #fecaca; border: 1px solid #ef4444;" onclick="abrirAltarDeSacrificio()">💀 Altar do Sacrifício</button>
                     <button id="btn-reroll" onclick="rerollLoja()">🔄 Atualizar Loja (🪙 <span id="lbl-reroll-cost">3</span>)</button>
                     <div>Seu Dinheiro: 🪙 <span id="shop-money">0</span></div>
                 </div>
@@ -145,6 +159,7 @@
                 <button id="btn-proximo-round">Próxima Partida</button>
             </div>
         </div>
+
     </div>
 
     <div id="tela-resultado" class="tela">

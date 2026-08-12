@@ -1,19 +1,16 @@
 // js/audio.js
-//
-// Gerenciador de som do Memeatro. Sons de menu/sfx/memes já vêm prontos no
-// projeto — se algum arquivo estiver ausente ou corrompido, o jogo não quebra,
-// ele só continua em silêncio (o erro de carregamento é engolido de propósito).
+// Gerenciador de som e música do Memeatro.
 
+// 📁 Base exata da sua pasta de arquivos sonoros
 const AUDIO_BASE = "assets/sons/";
 
-// 🎵 Músicas de fundo (loop) — trocam sozinhas conforme a tela muda
+// 🎵 Músicas de fundo (loop) -> pasta: assets/sons/musica/
 const MUSICAS = {
     menu: "musica/menu.mp3",
     partida: "musica/partida.mp3",
     loja: "musica/loja.mp3"
 };
 
-// 🔊 Efeitos sonoros pontuais
 const SFX = {
     clique: "sfx/clique.mp3",
     descartar: "sfx/descartar.mp3",
@@ -21,74 +18,127 @@ const SFX = {
     moeda: "sfx/moeda.mp3",
     comprar: "sfx/comprar.mp3",
     erro: "sfx/erro.mp3",
-    vitoriaRodada: "sfx/vitoria_rodada.mp3",
+    vitoria: "sfx/vitoria_rodada.mp3",        // Alias comum
+    vitoriaRodada: "sfx/vitoria_rodada.mp3",  // Nome padrão
     derrota: "sfx/derrota.mp3",
     abrirPacote: "sfx/abrir_pacote.mp3",
     cartaRevelada: "sfx/carta_revelada.mp3",
+    abrirPacotePrime: "sfx/abrir_pacote_prime.mp3", 
+    cartaLendariaReveal: "sfx/carta_lendaria_reveal.mp3",
     multFogo: "sfx/mult_fogo.mp3",
     reroll: "sfx/reroll.mp3"
 };
 
-// Volumes vão de 0 a 100 (facilita casar com o slider da tela de configurações)
+// Estado e Preferências de Áudio
 let volumeMusica = Number(localStorage.getItem("memeatro_vol_musica") ?? 50);
 let volumeSfx = Number(localStorage.getItem("memeatro_vol_sfx") ?? 70);
 let mutado = localStorage.getItem("memeatro_mutado") === "true";
 
 let musicaAtual = null;
 let nomeMusicaAtual = null;
-let audioPersonagemAtual = null; // toca no máximo 1 som de personagem por vez
-let sfxAtivos = []; // Rastreia todos os SFX tocados em segundo plano para poder parar ao fim da rodada
+let audioPersonagemAtual = null; 
+let sfxAtivos = []; 
+const cacheAudioSfx = {};
+let audioDestravado = false;
 
+// ⚡ 1. Pré-carregamento dos efeitos sonoros
+function preCarregarSfx() {
+    Object.keys(SFX).forEach(chave => {
+        const caminho = SFX[chave];
+        const srcFinal = caminho.startsWith("http") ? caminho : (AUDIO_BASE + caminho);
+        const audio = new Audio(srcFinal);
+        audio.preload = "auto";
+        cacheAudioSfx[chave] = audio;
+    });
+}
+
+// 🔓 2. Liberação do AudioContext & HTML5 Audio após o primeiro clique do usuário
+function destravarAudioContexto() {
+    if (audioDestravado) return;
+
+    // Desbloqueia Web Audio API se o navegador usar
+    if (typeof AudioContext !== "undefined" || typeof webkitAudioContext !== "undefined") {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+        }
+    }
+
+    // Testa um áudio mudo rápido para destravar elementos Audio()
+    const audioTeste = new Audio();
+    audioTeste.play().then(() => {
+        audioDestravado = true;
+        window.removeEventListener("click", destravarAudioContexto);
+        window.removeEventListener("keydown", destravarAudioContexto);
+    }).catch(() => {});
+}
+
+window.addEventListener("click", destravarAudioContexto);
+window.addEventListener("keydown", destravarAudioContexto);
+
+// 🔊 3. Toca efeitos sonoros (suporta sobreposição e clona o áudio)
 function tocarSfx(nomeSfx) {
     if (mutado || volumeSfx <= 0) return;
     const caminho = SFX[nomeSfx];
-    if (!caminho) return;
     
-    const audio = new Audio(AUDIO_BASE + caminho);
-    audio.volume = volumeSfx / 100;
-    
-    sfxAtivos.push(audio);
-    audio.onended = () => {
-        sfxAtivos = sfxAtivos.filter(a => a !== audio);
-    };
+    if (!caminho) {
+        console.warn(`[ÁUDIO] Efeito sonoro "${nomeSfx}" não foi registrado no objeto SFX.`);
+        return;
+    }
 
-    audio.play().catch(() => {}); // arquivo ausente ou autoplay bloqueado: ignora silenciosamente
+    try {
+        const srcFinal = caminho.startsWith("http") ? caminho : (AUDIO_BASE + caminho);
+        
+        // Clona para permitir que vários sons toquem simultaneamente
+        const audio = cacheAudioSfx[nomeSfx] ? cacheAudioSfx[nomeSfx].cloneNode(true) : new Audio(srcFinal);
+        audio.volume = volumeSfx / 100;
+        audio.currentTime = 0;
+        
+        sfxAtivos.push(audio);
+        audio.onended = () => {
+            sfxAtivos = sfxAtivos.filter(a => a !== audio);
+        };
+
+        const promise = audio.play();
+        if (promise !== undefined) {
+            promise.catch(err => {
+                console.warn(`[ÁUDIO] Arquivo ignorado ou não encontrado: ${srcFinal}`);
+            });
+        }
+    } catch (e) {
+        console.error(`[ÁUDIO] Erro ao tocar "${nomeSfx}":`, e);
+    }
 }
 
-// Deriva o caminho do som do personagem/carta.
-// Suporta fotos locais (memes), cartas com 'card.som' customizado e cartas do LoL!
-// Deriva o caminho do som do personagem/carta a partir da propriedade 'som', 'foto' ou 'nome'
+// 🃏 4. Mapeamento de sons para a pasta assets/sons/lol/ e assets/sons/memes/
 function caminhoSomPersonagem(card) {
     if (!card) return null;
 
-    // 1. Caminho explícito definido diretamente na carta
     if (card.som) return card.som;
 
-    // 2. Se a carta for do LoL (usando a foto da ddragon ou o nome do campeão)
+    // Cartas do League of Legends -> pasta: assets/sons/lol/
     if (card.foto && card.foto.includes("ddragon.leagueoflegends.com")) {
         if (!card.nome) return null;
         
-        // Trata o nome: minúsculas, troca espaços por '_' e remove caracteres especiais (ex: "Master Yi" -> "master_yi")
         const nomeFormatado = card.nome
             .toLowerCase()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
-            .replace(/['’]/g, "")                             // Remove aspas simples (ex: Vel'Koz -> velkoz)
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/['’]/g, "")
             .trim()
-            .replace(/\s+/g, "_");                             // Troca espaços por _
+            .replace(/\s+/g, "_");
 
-        return `${AUDIO_BASE}lol/${nomeFormatado}.mp3`;
+        return `lol/${nomeFormatado}.mp3`;
     }
 
-    // 3. Padrão para cartas de Memes/Fotos locais
+    // Cartas de Memes -> pasta: assets/sons/memes/
     if (card.foto && card.foto.startsWith("assets/fotos/")) {
         const nomeBase = card.foto.split("/").pop().replace(/\.[^.]+$/, "");
-        return `${AUDIO_BASE}memes/${nomeBase}.mp3`;
+        return `memes/${nomeBase}.mp3`;
     }
 
     return null;
 }
 
-// Interrompe o som de personagem em andamento
 function pararSomPersonagem() {
     if (audioPersonagemAtual) {
         audioPersonagemAtual.pause();
@@ -97,11 +147,8 @@ function pararSomPersonagem() {
     }
 }
 
-// 🔇 INTERROMPE TODOS OS EFEITOS SONOROS (Chamado ao encerrar rodada ou mudar de fase)
 function pararTodosEfeitos() {
     pararSomPersonagem();
-    
-    // Interrompe todos os SFX acumulados
     sfxAtivos.forEach(audio => {
         try {
             audio.pause();
@@ -111,8 +158,6 @@ function pararTodosEfeitos() {
     sfxAtivos = [];
 }
 
-// Toca o som de assinatura do personagem ou campeão do LoL.
-// Se não existir o arquivo específico, faz fallback pro clique.
 function tocarSomPersonagem(card) {
     pararSomPersonagem();
     if (mutado || volumeSfx <= 0) return;
@@ -120,31 +165,39 @@ function tocarSomPersonagem(card) {
     const caminho = caminhoSomPersonagem(card);
     if (!caminho) { tocarSfx("clique"); return; }
     
-    // Aceita tanto caminho local quanto URL completa
-    const srcFinal = caminho.startsWith("http") ? caminho : caminho;
+    const srcFinal = caminho.startsWith("http") ? caminho : (AUDIO_BASE + caminho);
     const audio = new Audio(srcFinal);
     audio.volume = volumeSfx / 100;
     
-    audio.addEventListener("error", () => tocarSfx("clique"), { once: true });
-    audio.play().catch(() => {});
+    audio.addEventListener("error", () => {
+        tocarSfx("clique");
+    }, { once: true });
+
+    audio.play().catch(() => {
+        tocarSfx("clique");
+    });
     
     audioPersonagemAtual = audio;
 }
 
+// 🎼 5. Tocar músicas da pasta assets/sons/musica/
 function tocarMusica(nomeMusica) {
-    if (nomeMusicaAtual === nomeMusica) return; // já está tocando essa faixa, não reinicia
+    if (nomeMusicaAtual === nomeMusica) return; 
     if (musicaAtual) musicaAtual.pause();
 
     const caminho = MUSICAS[nomeMusica];
     nomeMusicaAtual = nomeMusica;
     if (!caminho) { musicaAtual = null; return; }
 
-    musicaAtual = new Audio(AUDIO_BASE + caminho);
+    const srcFinal = caminho.startsWith("http") ? caminho : (AUDIO_BASE + caminho);
+    musicaAtual = new Audio(srcFinal);
     musicaAtual.loop = true;
     musicaAtual.volume = mutado ? 0 : volumeMusica / 100;
+    
     musicaAtual.play().catch(() => {});
 }
 
+// 🎛️ 6. Controles gerais e configurações
 function alternarMudo() {
     mutado = !mutado;
     localStorage.setItem("memeatro_mutado", mutado);
@@ -170,7 +223,6 @@ function ajustarVolumeSfx(valor) {
     localStorage.setItem("memeatro_vol_sfx", volumeSfx);
 }
 
-// 🎨 Tema claro/escuro — salvo e restaurado entre sessões
 function mudarTema(tema) {
     document.documentElement.setAttribute("data-tema", tema);
     localStorage.setItem("memeatro_tema", tema);
@@ -185,14 +237,17 @@ function atualizarBotoesTema() {
 }
 
 function abrirConfiguracoes() {
-    document.getElementById("overlay-configuracoes").style.display = "flex";
+    const el = document.getElementById("overlay-configuracoes");
+    if (el) el.style.display = "flex";
 }
 
 function fecharConfiguracoes() {
-    document.getElementById("overlay-configuracoes").style.display = "none";
+    const el = document.getElementById("overlay-configuracoes");
+    if (el) el.style.display = "none";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    preCarregarSfx();
     atualizarBotaoMudo();
 
     const temaSalvo = localStorage.getItem("memeatro_tema") || "escuro";

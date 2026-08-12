@@ -12,7 +12,7 @@ const POOL_INICIAL = [
     { nome: "Panda", meme: "Gordo, mas um gordo gente boa", foto: "assets/fotos/panda.jpg", chips: 30, colecao: "cria" },
     { nome: "Rivotril", meme: "Calvo, e se chamar ele pra alguma coisa, ele não vai", foto: "assets/fotos/calvo.jpg", chips: 30, colecao: "cria" },
     
-    // Metade dos Memes Iniciais (Comuns)
+    // Memes Iniciais (Comuns)
     { nome: "Luva de Pedreiro", meme: "RECEEEBA", foto: "assets/fotos/luva.jpg", chips: 11, colecao: "meme_base" },
     { nome: "Dava Jones", meme: "Eu quero TODAS AS CARTAS", foto: "assets/fotos/dava.jpg", chips: 6, colecao: "meme_base" },
     { nome: "Antedeguemon", meme: "Antedeguemon", foto: "assets/fotos/antedeguemon.jpg", chips: 7, colecao: "meme_base" },
@@ -113,8 +113,6 @@ const POOL_CRIA_PRIME = [
     }
 ];
 
-// 📦 POOLS DOS PACOTES DA LOJA (Bloqueados até abrir o pack)
-// Alias global para garantir compatibilidade com a loja.js
 const POOL_PACK_CRIA_PRIME = POOL_CRIA_PRIME;
 
 const POOL_PACK_LOL = [
@@ -181,16 +179,6 @@ const LISTA_JOKERS = [
     { id: "j_gank_cria", titulo: "Gank dos Cria", desc: "Se jogar um campeão do LoL junto com qualquer membro do grupo original, ganha +8 Mult.", preco: 6 }
 ];
 
-// 👥 Grupo oficial expandido para validar os combos normais e Primes
-const GRUPO_CRIA = [
-    // Normais
-    "Biel", "Saches", "Roger", "Thiago", "Victor", "Anderson", "Valter", "Panda", "Rivotril",
-    // Primes / Evoluídos
-    "Biel (Modo Turbo)", "Saches (CEO da Call)", "Roger (Faria Lima Bets)", 
-    "Thiago (O Trabalhador Lendário)", "Victor (O Implacável)", 
-    "Anderson (Amendoim Atômico)", "Valter (Challenger de Coração)", 
-    "Panda (Lord Tryhard)", "Rivotril (O Invocado)"
-];
 const GRUPO_CANCELADOS = ["Goleiro Bruno", "Nego Di", "Maniaco do Parque"];
 const GRUPO_WEB_FAMOSOS = ["Luva de Pedreiro", "Dava Jones", "Bluezao", "Nego Bam", "Antedeguemon", "Cachorro Caramelo"];
 const GRUPO_ADCS = ["Vayne", "Lee Sin", "Jhin", "Draven"];
@@ -200,8 +188,19 @@ const GRUPO_MAGOS = ["Teemo", "Shaco", "Taric", "Lux", "Yasuo"];
 // 🔧 KITS DE UPGRADE
 const DADOS_UPGRADES = [
     { id: "u_chips", nome: "Reforço de Chips", desc: "Escolha uma carta do seu baralho e grave +20 Chips fixos nela, para sempre.", preco: 5, tipo: "chips", valor: 20 },
-    { id: "u_mult", nome: "Injeção de Mult", desc: "Escolha uma carta do seu baralho e grave +3 Mult fixo nela, para sempre.", preco: 7, tipo: "mult", valor: 3 },
-    { id: "u_clone", nome: "Clonagem Barata", desc: "Escolha uma carta do seu baralho e ganhe uma cópia extra dela agora mesmo.", preco: 6, tipo: "clone", valor: 0 }
+    { id: "u_mult", nome: "Injeção de Mult", desc: "Escolha uma carta do seu baralho e grave +3 Mult fixo nela, para sempre.", preco: 7, tipo: "mult", valor: 3 }
+];
+
+// 🪐 CARTAS PLANETA (Mapeadas corretamente para as mãos do jogo)
+const CARTAS_PLANETA = [
+    { id: "planeta_par", nome: "Planeta dos Gêmeos", desc: "Aumenta o nível da mão 'Par de Amigos'.", preco: 4, alvoMao: "Par de Amigos", bonus: { chips: 15, mult: 1 } },
+    { id: "planeta_trinca", nome: "Planeta da Revoada", desc: "Aumenta o nível da mão 'Trinca de Memes'.", preco: 5, alvoMao: "Trinca de Memes", bonus: { chips: 20, mult: 2 } },
+    { id: "planeta_quadra", nome: "Planeta da Monocultura", desc: "Aumenta o nível da mão 'Quadra Suprema'.", preco: 7, alvoMao: "Quadra Suprema", bonus: { chips: 40, mult: 3 } },
+    { id: "planeta_full_house", nome: "Planeta da Casa Cheia", desc: "Aumenta o nível da mão 'Full House de Call'.", preco: 6, alvoMao: "Full House de Call", bonus: { chips: 30, mult: 2 } },
+    { id: "planeta_panelinha", nome: "Planeta da Panelinha", desc: "Aumenta o nível das mãos 'Panelinha da Call'.", preco: 8, alvoMao: "Panelinha da Call (Trio)", bonus: { chips: 25, mult: 2 } },
+    { id: "planeta_lol", nome: "Planeta do PBE", desc: "Aumenta o nível da mão 'Fila Solo Q Solo'.", preco: 7, alvoMao: "Fila Solo Q Solo", bonus: { chips: 20, mult: 2 } },
+    { id: "planeta_streamer", nome: "Planeta do Host", desc: "Aumenta o nível da mão 'Sindicato dos Streamers'.", preco: 6, alvoMao: "Sindicato dos Streamers", bonus: { chips: 25, mult: 2 } },
+    { id: "planeta_carta_alta", nome: "Planeta do Solitário", desc: "Aumenta o nível da mão 'Carta Alta'.", preco: 3, alvoMao: "Carta Alta", bonus: { chips: 10, mult: 1 } }
 ];
 
 // 🏷️ NOMES DOS NÍVEIS
@@ -223,7 +222,7 @@ const NOMES_ANTE_ENDLESS = [
 ];
 
 function nomeDoAnte(round) {
-    if (round <= 8) return NOMES_ANTE_FIXOS[round];
+    if (round <= 8) return NOMES_ANTE_FIXOS[round] || `Ante ${round}`;
     const posicao = round - 9;
     const volta = Math.floor(posicao / NOMES_ANTE_ENDLESS.length) + 1;
     const tema = NOMES_ANTE_ENDLESS[posicao % NOMES_ANTE_ENDLESS.length];
@@ -232,13 +231,12 @@ function nomeDoAnte(round) {
 
 // 🃏 Cria o elemento visual de uma carta
 function criarElementoCarta(card, opcoes = {}) {
-    const totalChips = card.chips + (card.chipsBonus || 0);
+    const totalChips = (card.chips || 0) + (card.chipsBonus || 0);
     const foiUpgradada = (card.chipsBonus || 0) > 0 || (card.multBonus || 0) > 0;
     const ehPrime = card.colecao === "cria_prime" || (card.nome && card.nome.includes("Prime"));
 
     const el = document.createElement("div");
     
-    // Classes visuais incluindo suporte a Prime e Upgrades
     el.className = `card ${opcoes.classeExtra || ""} ${foiUpgradada ? "card-upgraded" : ""} ${ehPrime ? "cria-prime" : ""}`.trim();
     
     if (card.colecao) {
@@ -250,11 +248,11 @@ function criarElementoCarta(card, opcoes = {}) {
             <span class="badge-chips">${totalChips}</span>
             ${card.multBonus ? `<span class="badge-mult">+${card.multBonus}</span>` : ""}
         </div>
-        <div class="card-name">${card.nome}</div>
+        <div class="card-name">${card.nome || "Carta"}</div>
         <div class="card-avatar">
-            <img src="${card.foto}" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(card.nome)}';">
+            <img src="${card.foto}" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(card.nome || "card")}';">
         </div>
-        <div class="card-meme">${card.meme}</div>
+        <div class="card-meme">${card.meme || ""}</div>
     `;
 
     if (opcoes.onClick) el.onclick = () => opcoes.onClick(card, el);

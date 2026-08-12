@@ -13,17 +13,15 @@ let gameState = {
     discards: 3,
     startingDiscards: 3,
     rerollCost: 3,
-    cartasDesbloqueadasRun: [], // 🎒 Cartas que o jogador possui atualmente na Run (Gacha)
+    cartasDesbloqueadasRun: [],
     deck: [],
     hand: [],
     selectedCards: [],
     ownedJokers: []
 };
 
-// 🎞️ Valores exibidos na tela para a animação de contagem estilo Balatro
 let valoresExibidos = { score: 0, money: 10 };
 
-// 🎯 METAS DE PONTUAÇÃO POR ANTE
 const METAS_ANTE_BASE = { 
     1: 300, 
     2: 600, 
@@ -37,16 +35,13 @@ const METAS_ANTE_BASE = {
     10: 3000
 };
 
-// Função para buscar a meta do Ante atual
 function obterMetaAnte(round) {
     if (round <= 10) {
         return METAS_ANTE_BASE[round] || 300;
     }
-    // A partir do Ante 11, adiciona +500 por round extra
     return METAS_ANTE_BASE[10] + (round - 10) * 500;
 }
 
-// ⚠️ GAMBIARRA DE SEGURANÇA: Evita o crash se algo procurar METAS_ANTE[round]
 const METAS_ANTE = new Proxy(METAS_ANTE_BASE, {
     get: function(target, prop) {
         const round = Number(prop);
@@ -57,7 +52,6 @@ const METAS_ANTE = new Proxy(METAS_ANTE_BASE, {
     }
 });
 
-// 📈 TABELA EXPANDIDA DE MÃOS DIVERSIFICADAS
 const MAOS_POKER = {
     "Carta Alta": { chips: 5, mult: 1 },
     "Par de Amigos": { chips: 10, mult: 2 },
@@ -66,17 +60,14 @@ const MAOS_POKER = {
     "Full House de Call": { chips: 40, mult: 4 },
     "Quadra Suprema": { chips: 60, mult: 7 },
     
-    // --- ⚔️ CLASSES DO LOL ---
-    "Inimigos do Toque": { chips: 25, mult: 4 },        // Só ADCs
-    "Mão da Geladeira Brastemp": { chips: 40, mult: 3 }, // Só Tanks
-    "Circo de Esquizofrenia": { chips: 30, mult: 4 },     // Só Magos
-    "Fila Solo Q Solo": { chips: 35, mult: 3 },          // Qualquer mistura de 3+ cartas do LoL
+    "Inimigos do Toque": { chips: 25, mult: 4 },
+    "Mão da Geladeira Brastemp": { chips: 40, mult: 3 },
+    "Circo de Esquizofrenia": { chips: 30, mult: 4 },
+    "Fila Solo Q Solo": { chips: 35, mult: 3 },
 
-    // --- 🎥 STREAMERS ---
-    "Sindicato dos Streamers": { chips: 35, mult: 4 },   // Só Streamers
-    "Combo do Clipe Viral": { chips: 45, mult: 5 },      // Streamers + Memes misturados
+    "Sindicato dos Streamers": { chips: 35, mult: 4 },
+    "Combo do Clipe Viral": { chips: 45, mult: 5 },
 
-    // --- 🎙️ COMBOS TEMÁTICOS ---
     "Mão dos Cancelados": { chips: 35, mult: 4 },
     "Banda de Web-Famosos": { chips: 30, mult: 4 },
     "Noite de Overclock": { chips: 25, mult: 3 },
@@ -86,7 +77,6 @@ const MAOS_POKER = {
     "Panelinha da Call (Gank Máximo)": { chips: 75, mult: 8 },
 };
 
-// Mapeamento dinâmico de imagens de exemplo para ilustrar o Guia de Mãos
 const IMAGENS_PREVIEW_MAOS = {
     "Panelinha da Call (Trio)": { foto: "assets/fotos/biel.jpg", desc: "Membros da guilda" },
     "Panelinha da Call (Quadra)": { foto: "assets/fotos/panda.jpg", desc: "Os cria em peso" },
@@ -135,11 +125,23 @@ function animarNumero(elemento, valorAntigo, valorNovo, duracaoMs = 600) {
 function reiniciarAnimacao(elemento, classe) {
     if (!elemento) return;
     elemento.classList.remove(classe);
-    void elemento.offsetWidth; // Força reflow no DOM
+    void elemento.offsetWidth;
     elemento.classList.add(classe);
 }
 
-function alternarTela(idTela) {
+function alternarTela(idTela, manterSfx = false) {
+    // Só para os efeitos se NÃO for pra manter o som da vitória/derrota
+    if (!manterSfx && typeof pararTodosEfeitos === "function") {
+        pararTodosEfeitos();
+    }
+    
+    if (typeof tocarMusica === "function") {
+        if (idTela === "tela-menu") tocarMusica("menu");
+        else if (idTela === "tela-partida") tocarMusica("partida");
+        else if (idTela === "tela-loja") tocarMusica("loja");
+    }
+
+
     const loading = document.getElementById("tela-loading");
     const todasTelas = document.querySelectorAll('.tela');
     const frasesLoading = [
@@ -180,14 +182,7 @@ function alternarTela(idTela) {
                 if (proxima) proxima.classList.add('ativo');
             }, 400);
         }
-    }, 1500);
-
-    // 🎵 Troca de músicas
-    if (typeof tocarMusica === "function") {
-        if (idTela === "tela-menu") tocarMusica("menu");
-        else if (idTela === "tela-partida") tocarMusica("partida");
-        else if (idTela === "tela-loja") tocarMusica("loja");
-    }
+    }, 1200);
 }
 
 function mostrarTelaResultado(linhas, total) {
@@ -234,7 +229,7 @@ function gerarPainelColaMaos() {
     const tImg = document.getElementById("img-tooltip-src");
     const tLeg = document.getElementById("txt-tooltip-legenda");
 
-    if (!container || !tooltip) return;
+    if (!container) return;
     container.innerHTML = "";
 
     Object.keys(MAOS_POKER).forEach(nomeMao => {
@@ -250,26 +245,28 @@ function gerarPainelColaMaos() {
             </div>
         `;
 
-        linha.addEventListener("mouseenter", () => {
-            const infoPreview = IMAGENS_PREVIEW_MAOS[nomeMao];
-            if (infoPreview && tImg && tLeg) {
-                tImg.src = infoPreview.foto;
-                tImg.onerror = () => {
-                    tImg.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(nomeMao)}`;
-                };
-                tLeg.innerText = infoPreview.desc.toUpperCase();
-                tooltip.style.display = "block";
-            }
-        });
+        if (tooltip && tImg && tLeg) {
+            linha.addEventListener("mouseenter", () => {
+                const infoPreview = IMAGENS_PREVIEW_MAOS[nomeMao];
+                if (infoPreview) {
+                    tImg.src = infoPreview.foto;
+                    tImg.onerror = () => {
+                        tImg.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(nomeMao)}`;
+                    };
+                    tLeg.innerText = infoPreview.desc.toUpperCase();
+                    tooltip.style.display = "block";
+                }
+            });
 
-        linha.addEventListener("mousemove", (e) => {
-            tooltip.style.left = (e.clientX + 20) + "px";
-            tooltip.style.top = (e.clientY - 60) + "px";
-        });
+            linha.addEventListener("mousemove", (e) => {
+                tooltip.style.left = (e.clientX + 20) + "px";
+                tooltip.style.top = (e.clientY - 60) + "px";
+            });
 
-        linha.addEventListener("mouseleave", () => {
-            tooltip.style.display = "none";
-        });
+            linha.addEventListener("mouseleave", () => {
+                tooltip.style.display = "none";
+            });
+        }
 
         container.appendChild(linha);
     });
@@ -390,16 +387,15 @@ function selecionarCarta(card) {
 // 4. SISTEMA DE DETECÇÃO DE MÃOS E CÁLCULO DE PONTUAÇÃO
 // =============================================================================
 
-function eDoGrupoCria(nome) {
-    if (!nome) return false;
-    if (typeof GRUPO_CRIA !== "undefined") {
-        return GRUPO_CRIA.some(cria => nome.includes(cria) || cria.includes(nome));
-    }
-    return ["Biel", "Saches", "Roger", "Thiago", "Victor", "Anderson", "Valter", "Panda", "Rivotril"].some(cria => nome.includes(cria));
+function eDoGrupoCria(card) {
+    if (!card || !card.colecao) return false;
+    return card.colecao === "cria" || card.colecao === "cria_prime";
 }
 
-function detectarMelhorMaoEstatistica(nomes, colecoes) {
-    const qtdGrupo = nomes.filter(n => eDoGrupoCria(n)).length;
+function detectarMelhorMaoEstatistica(cartas) {
+    const nomes = cartas.map(c => c.nome || "");
+    const colecoes = cartas.map(c => c.colecao || "");
+    const qtdGrupo = cartas.filter(eDoGrupoCria).length;
     const qtdCancelados = typeof GRUPO_CANCELADOS !== "undefined" ? nomes.filter(n => GRUPO_CANCELADOS.includes(n)).length : 0;
     const qtdFamosos = typeof GRUPO_WEB_FAMOSOS !== "undefined" ? nomes.filter(n => GRUPO_WEB_FAMOSOS.includes(n)).length : 0;
 
@@ -415,12 +411,10 @@ function detectarMelhorMaoEstatistica(nomes, colecoes) {
     nomes.forEach(nome => contagem[nome] = (contagem[nome] || 0) + 1);
     const valoresRepetidos = Object.values(contagem).sort((a, b) => b - a);
 
-    // 🥇 PRIORIDADE 1: COMBOS MÁXIMOS E MAIORES
     if (qtdGrupo >= 5) return "Panelinha da Call (Gank Máximo)";
     if (qtdGrupo === 4) return "Panelinha da Call (Quadra)";
     if (qtdGrupo === 3) return "Panelinha da Call (Trio)";
     
-    // 🥈 PRIORIDADE 2: COMBOS PUROS DE CLASSE
     if (temTank >= 2 && temTank === nomes.length) return "Mão da Geladeira Brastemp";
     if (temMago >= 2 && temMago === nomes.length) return "Circo de Esquizofrenia";
     if (temAdc >= 2 && temAdc === nomes.length) return "Inimigos do Toque";
@@ -428,7 +422,6 @@ function detectarMelhorMaoEstatistica(nomes, colecoes) {
     if (qtdCancelados >= 2 && qtdCancelados === nomes.length) return "Mão dos Cancelados";
     if (qtdFamosos >= 2 && qtdFamosos === nomes.length) return "Banda de Web-Famosos";
 
-    // 🥉 PRIORIDADE 3: COMBOS DE MISTURA E POKER TRADICIONAL
     if (qtdStreamerTotal >= 1 && qtdMemeTotal >= 1) return "Combo do Clipe Viral";
     if (qtdLolTotal >= 3) return "Fila Solo Q Solo";
     
@@ -452,10 +445,7 @@ function calcularPontuacaoEmTempoReal() {
     let nomeMaoDetectada = "Nenhuma";
 
     if (gameState.selectedCards.length > 0) {
-        const nomes = gameState.selectedCards.map(c => c.nome || "");
-        const colecoes = gameState.selectedCards.map(c => c.colecao || "");
-        
-        nomeMaoDetectada = detectarMelhorMaoEstatistica(nomes, colecoes);
+        nomeMaoDetectada = detectarMelhorMaoEstatistica(gameState.selectedCards);
         const statsMao = MAOS_POKER[nomeMaoDetectada] || { chips: 5, mult: 1 };
         
         baseChips += statsMao.chips; 
@@ -467,6 +457,7 @@ function calcularPontuacaoEmTempoReal() {
         const tanks = typeof GRUPO_TANKS !== "undefined" ? GRUPO_TANKS : [];
         const magos = typeof GRUPO_MAGOS !== "undefined" ? GRUPO_MAGOS : [];
 
+        const nomes = gameState.selectedCards.map(c => c.nome || "");
         const contagemNomes = {}; 
         nomes.forEach(n => contagemNomes[n] = (contagemNomes[n] || 0) + 1);
 
@@ -476,14 +467,13 @@ function calcularPontuacaoEmTempoReal() {
         });
         const temTrincaMonoLol = Object.values(contagemLol).some(qtd => qtd >= 3);
 
-        // 🔒 SISTEMA DE EXPURGO COM TRATAMENTO NUMÉRICO ANTI-NaN
         gameState.selectedCards.forEach(c => {
             let pertenceAoCombo = false;
             const cChips = Number(c.chips) || 0;
             const cChipsBonus = Number(c.chipsBonus) || 0;
             const cMultBonus = Number(c.multBonus) || 0;
 
-            if (nomeMaoDetectada.startsWith("Panelinha da Call") && eDoGrupoCria(c.nome)) pertenceAoCombo = true;
+            if (nomeMaoDetectada.startsWith("Panelinha da Call") && eDoGrupoCria(c)) pertenceAoCombo = true;
             else if (nomeMaoDetectada === "Mão da Geladeira Brastemp" && tanks.includes(c.nome)) pertenceAoCombo = true;
             else if (nomeMaoDetectada === "Circo de Esquizofrenia" && magos.includes(c.nome)) pertenceAoCombo = true;
             else if (nomeMaoDetectada === "Inimigos do Toque" && adcs.includes(c.nome)) pertenceAoCombo = true;
@@ -493,7 +483,7 @@ function calcularPontuacaoEmTempoReal() {
             else if (nomeMaoDetectada === "Banda de Web-Famosos" && webFamosos.includes(c.nome)) pertenceAoCombo = true;
             else if (nomeMaoDetectada === "Mão dos Cancelados" && cancelados.includes(c.nome)) pertenceAoCombo = true;
             else if (nomeMaoDetectada === "Noite de Overclock" && c.nome && ["Biel", "Saches", "Thiago"].some(x => c.nome.includes(x))) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Combo das Casadas" && c.nome && (c.nome.includes("Victor") || eDoGrupoCria(c.nome))) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Combo das Casadas" && c.nome && (c.nome.includes("Victor") || eDoGrupoCria(c))) pertenceAoCombo = true;
             
             else if (nomeMaoDetectada === "Quadra Suprema" && contagemNomes[c.nome] >= 4) pertenceAoCombo = true;
             else if (nomeMaoDetectada === "Full House de Call" && (contagemNomes[c.nome] === 3 || contagemNomes[c.nome] === 2)) pertenceAoCombo = true;
@@ -513,7 +503,6 @@ function calcularPontuacaoEmTempoReal() {
             }
         });
 
-        // Sinergias Passivas Isoladas
         if (nomes.some(n => n.includes("Kid")) && nomes.some(n => n.includes("Anderson"))) { baseChips += 40; baseMult += 4; }
         if (nomes.some(n => n.includes("Roger")) && nomes.some(n => n.includes("Nego Di"))) { baseChips -= 15; baseMult += 6; }
         if (nomes.some(n => n.includes("Ednaldo"))) { baseMult = 0; } 
@@ -522,7 +511,7 @@ function calcularPontuacaoEmTempoReal() {
         if (nomes.some(n => n.includes("Gaules"))) { baseChips += (gameState.discards * 5); }
         if (nomes.some(n => n.includes("Baiano")) && colecoes.includes("lol")) { baseMult += 6; }
 
-        // Curingas da Loja
+        const colecoes = gameState.selectedCards.map(c => c.colecao || "");
         gameState.ownedJokers.forEach(j => {
             if (j.id === "j_clutch" && gameState.selectedCards.length === 1) baseMult += 8;
             if (j.id === "j_tilt" && nomes.some(n => n.includes("Biel"))) multiplicadorFinalDoJoker *= 2.5;
@@ -616,10 +605,8 @@ function proximoRound() {
     alternarTela("tela-partida");
     gameState.round++;
     
-    // Calcula dinamicamente a meta sem estourar o limite
     gameState.targetScore = obterMetaAnte(gameState.round);
     
-    // 🧹 RESET DO ROUND
     gameState.currentScore = 0;
     valoresExibidos.score = 0;
     gameState.hands = 4;
@@ -632,13 +619,11 @@ function proximoRound() {
     gameState.discards = gameState.ownedJokers.some(j => j.id === "j_crying_cat") ? 2 : 3;
     gameState.startingDiscards = gameState.discards;
 
-    // Restaura botões
     const btnPlay = document.getElementById("btn-play");
     const btnDiscard = document.getElementById("btn-discard");
     if (btnPlay) btnPlay.style.display = "block";
     if (btnDiscard) btnDiscard.style.display = "block";
 
-    // ✨ Limpeza da interface
     const lblMao = document.getElementById("lbl-mao-detectada");
     const logMsg = document.getElementById("log-msg");
     if (lblMao) lblMao.innerText = "Nenhuma";
@@ -647,11 +632,11 @@ function proximoRound() {
     montarBaralho(); 
     comprarCartas(); 
     atualizarInterface();
-    pararTodosEfeitos();
+    if (typeof pararTodosEfeitos === "function") pararTodosEfeitos();
 }
 
 // =============================================================================
-// 6. EVENT LISTENERS
+// 6. EVENT LISTENERS E SALVAMENTO
 // =============================================================================
 
 document.getElementById("btn-iniciar")?.addEventListener("click", () => { 
@@ -693,15 +678,14 @@ document.getElementById("btn-play")?.addEventListener("click", () => {
     setTimeout(() => {
         gameState.hands--;
         const pt = calcularPontuacaoEmTempoReal();
-        const totalMão = Math.floor((Number(pt.chips) || 0) * (Number(pt.mult) || 0));
-        gameState.currentScore += totalMão;
+        const totalMao = Math.floor((Number(pt.chips) || 0) * (Number(pt.mult) || 0));
+        gameState.currentScore += totalMao;
 
         const logMsg = document.getElementById("log-msg");
-        if (logMsg) logMsg.innerText = `Jogou ${pt.nomeMao}! +${totalMão} pontos!`;
+        if (logMsg) logMsg.innerText = `Jogou ${pt.nomeMao}! +${totalMao} pontos!`;
 
         if (pt.mult >= 20 && typeof tocarSfx === "function") tocarSfx("multFogo");
 
-        // 🃏 Twisted Fate
         if (gameState.ownedJokers.some(j => j.id === "j_tf")) {
             const qtdLolJogados = gameState.selectedCards.filter(c => c.colecao === "lol").length;
             if (qtdLolJogados > 0) gameState.money += qtdLolJogados;
@@ -756,3 +740,77 @@ document.getElementById("btn-discard")?.addEventListener("click", () => {
     comprarCartas();
     atualizarInterface();
 });
+
+function exportarSave() {
+    try {
+        const saveState = JSON.parse(JSON.stringify(gameState));
+        delete saveState.deck;
+        delete saveState.hand;
+        delete saveState.selectedCards;
+
+        const jsonString = JSON.stringify(saveState, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const now = new Date();
+        const ano = now.getFullYear();
+        const mes = String(now.getMonth() + 1).padStart(2, '0');
+        const dia = String(now.getDate()).padStart(2, '0');
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `memeatro_save_${ano}-${mes}-${dia}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        if (typeof tocarSfx === "function") tocarSfx("moeda");
+        alert("Progresso exportado!");
+    } catch (error) {
+        alert("Erro ao exportar o progresso.");
+    }
+}
+
+function carregarEstadoDoSave(saveData) {
+    if (!saveData || typeof saveData.round !== 'number' || !Array.isArray(saveData.cartasDesbloqueadasRun)) {
+        throw new Error("Arquivo de save inválido.");
+    }
+
+    Object.assign(gameState, saveData);
+    gameState.hands = gameState.hands ?? 4;
+    gameState.discards = gameState.discards ?? 3;
+    valoresExibidos = { score: gameState.currentScore || 0, money: gameState.money || 0 };
+
+    proximoRound();
+    gameState.round--; 
+    
+    atualizarInterface();
+    renderizarJokersNaPartida();
+    alternarTela("tela-partida");
+    alert(`Jogo carregado no Ante ${gameState.round}.`);
+}
+
+function importarSave() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = readerEvent => {
+            try {
+                const saveObject = JSON.parse(readerEvent.target.result);
+                carregarEstadoDoSave(saveObject);
+            } catch (error) {
+                alert(error.message || "Não foi possível carregar o save.");
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+    };
+    input.click();
+}
+
+document.getElementById("btn-exportar-save")?.addEventListener("click", exportarSave);
+document.getElementById("btn-importar-save-config")?.addEventListener("click", importarSave);
+document.getElementById("btn-importar-save-menu")?.addEventListener("click", importarSave);
