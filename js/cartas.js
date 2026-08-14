@@ -25,7 +25,7 @@ const POOL_CRIA_PRIME = [
         id: "biel_prime",
         nome: "Biel (Modo Turbo)", 
         meme: "Overclock Quântico sem Pasta Térmica", 
-        foto: "assets/fotos/biel.jpg", 
+        foto: "assets/fotos/biel_prime.jpg", 
         chips: 65, 
         chipsBonus: 0,
         multBonus: 5, 
@@ -35,7 +35,7 @@ const POOL_CRIA_PRIME = [
         id: "saches_prime",
         nome: "Saches (CEO da Call)", 
         meme: "Acumula 4 empregos e clona o próprio PIX", 
-        foto: "assets/fotos/saches.jpg", 
+        foto: "assets/fotos/saches_prime.jpg", 
         chips: 80, 
         chipsBonus: 0,
         multBonus: 6,
@@ -45,7 +45,7 @@ const POOL_CRIA_PRIME = [
         id: "roger_prime",
         nome: "Roger (Faria Lima Bets)", 
         meme: "Limpou o nome no Serasa e comprou fiado na Riot", 
-        foto: "assets/fotos/roger.jpg", 
+        foto: "assets/fotos/roger_prime.jpg", 
         chips: 40, 
         chipsBonus: 0,
         multBonus: 4,
@@ -55,7 +55,7 @@ const POOL_CRIA_PRIME = [
         id: "thiago_prime",
         nome: "Thiago (O Trabalhador Lendário)", 
         meme: "Operando 7 máquinas ao mesmo tempo às 3h da manhã", 
-        foto: "assets/fotos/thiago.jpg", 
+        foto: "assets/fotos/thiago_prime.jpg", 
         chips: 75, 
         chipsBonus: 0,
         multBonus: 5,
@@ -65,7 +65,7 @@ const POOL_CRIA_PRIME = [
         id: "victor_prime",
         nome: "Victor (O Implacável)", 
         meme: "Aprovado em todos os Cartórios de Casamento", 
-        foto: "assets/fotos/victor.jpg", 
+        foto: "assets/fotos/victor_prime.jpg", 
         chips: 55, 
         chipsBonus: 0,
         multBonus: 4,
@@ -75,7 +75,7 @@ const POOL_CRIA_PRIME = [
         id: "anderson_prime",
         nome: "Anderson (Amendoim Atômico)", 
         meme: "Pequeno no tamanho, destruidor no combo", 
-        foto: "assets/fotos/anderson.jpg", 
+        foto: "assets/fotos/anderson_prime.jpg", 
         chips: 50, 
         chipsBonus: 0,
         multBonus: 4,
@@ -85,7 +85,7 @@ const POOL_CRIA_PRIME = [
         id: "valter_prime",
         nome: "Valter (Challenger de Coração)", 
         meme: "Erra o Smite mas acerta o coração da galera", 
-        foto: "assets/fotos/valter.jpg", 
+        foto: "assets/fotos/valter_prime.jpg", 
         chips: 35, 
         chipsBonus: 0,
         multBonus: 3,
@@ -95,7 +95,7 @@ const POOL_CRIA_PRIME = [
         id: "panda_prime",
         nome: "Panda (Lord Tryhard)", 
         meme: "100% de Winrate de Rengar após 8 energéticos", 
-        foto: "assets/fotos/panda.jpg", 
+        foto: "assets/fotos/panda_prime.jpg", 
         chips: 100, 
         chipsBonus: 0,
         multBonus: 8,
@@ -105,7 +105,7 @@ const POOL_CRIA_PRIME = [
         id: "rivotril_prime",
         nome: "Rivotril (O Invocado)", 
         meme: "Apareceu na call depois de 3 anos de convite", 
-        foto: "assets/fotos/calvo.jpg", 
+        foto: "assets/fotos/rivotril_prime.jpg", 
         chips: 90, 
         chipsBonus: 0,
         multBonus: 7,
@@ -229,32 +229,150 @@ function nomeDoAnte(round) {
     return volta > 1 ? `${tema} ${volta}x` : tema;
 }
 
+
+// CSS da fusão lado a lado (injetado automaticamente)
+(function injetarCSSFusao() {
+    if (typeof document === "undefined") return;
+    if (document.getElementById("css-fusao-memeatro")) return;
+    const style = document.createElement("style");
+    style.id = "css-fusao-memeatro";
+    style.textContent = `
+        .carta-fusao .fusao-avatar {
+            display: flex !important;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 6px;
+        }
+        .carta-fusao .fusao-img {
+            width: 50%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+        }
+        .carta-fusao .fusao-img.esquerda {
+            border-right: 2px solid rgba(255, 215, 0, 0.6);
+        }
+        .carta-fusao .badge-fusao {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            font-weight: bold;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .carta-fusao {
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.45);
+        }
+    `;
+    if (document.head) document.head.appendChild(style);
+    else document.addEventListener("DOMContentLoaded", () => document.head.appendChild(style));
+})();
+
 // 🃏 Cria o elemento visual de uma carta
 function criarElementoCarta(card, opcoes = {}) {
     const totalChips = (card.chips || 0) + (card.chipsBonus || 0);
-    const foiUpgradada = (card.chipsBonus || 0) > 0 || (card.multBonus || 0) > 0;
+    const foiUpgradada = (card.chipsBonus || 0) > 0 || (card.multBonus || 0) > 0 || !!card.edicao;
     const ehPrime = card.colecao === "cria_prime" || (card.nome && card.nome.includes("Prime"));
+    const ehFusao = !!card.fotoA && !!card.fotoB;
 
     const el = document.createElement("div");
     
-    el.className = `card ${opcoes.classeExtra || ""} ${foiUpgradada ? "card-upgraded" : ""} ${ehPrime ? "cria-prime" : ""}`.trim();
+    el.className = `card ${opcoes.classeExtra || ""} ${foiUpgradada ? "card-upgraded" : ""} ${ehPrime ? "cria-prime" : ""} ${ehFusao ? "carta-fusao" : ""} ${card.edicao ? "edicao-" + card.edicao : ""}`.trim();
     
     if (card.colecao) {
         el.setAttribute("data-colecao", card.colecao);
+    }
+
+    let avatarHTML = "";
+    if (ehFusao) {
+        avatarHTML = `
+            <div class="card-avatar fusao-avatar">
+                <img src="${card.fotoA}" class="fusao-img esquerda" onerror="this.style.display='none'">
+                <img src="${card.fotoB}" class="fusao-img direita" onerror="this.style.display='none'">
+            </div>
+        `;
+    } else {
+        const srcFoto = card.fotoFusao || card.foto || "";
+        avatarHTML = `
+            <div class="card-avatar">
+                <img src="${srcFoto}" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(card.nome || "card")}';">
+            </div>
+        `;
     }
 
     el.innerHTML = `
         <div class="card-badge">
             <span class="badge-chips">${totalChips}</span>
             ${card.multBonus ? `<span class="badge-mult">+${card.multBonus}</span>` : ""}
+            ${card.edicao === "foil" ? `<span class="badge-edicao" title="Foil">✨</span>` : ""}
+            ${card.edicao === "holo" ? `<span class="badge-edicao" title="Holo">🌈</span>` : ""}
+            ${card.edicao === "polychrome" ? `<span class="badge-edicao" title="Polychrome">💎</span>` : ""}
+            ${ehFusao ? `<span class="badge-fusao">🔀</span>` : ""}
         </div>
         <div class="card-name">${card.nome || "Carta"}</div>
-        <div class="card-avatar">
-            <img src="${card.foto}" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(card.nome || "card")}';">
-        </div>
+        ${avatarHTML}
         <div class="card-meme">${card.meme || ""}</div>
     `;
 
     if (opcoes.onClick) el.onclick = () => opcoes.onClick(card, el);
     return el;
+}
+
+// 🔀 Cria uma carta fundida PODEROSA (usa as fotos originais lado a lado)
+function criarCartaFundida(cartaA, cartaB) {
+    let chipsBase = Math.floor(((Number(cartaA.chips) || 0) + (Number(cartaB.chips) || 0)) * 0.75) + 35;
+    let multBonus = Math.floor(((Number(cartaA.multBonus) || 0) + (Number(cartaB.multBonus) || 0)) / 1.5) + 6;
+    let chipsBonus = Math.floor(((Number(cartaA.chipsBonus) || 0) + (Number(cartaB.chipsBonus) || 0)) / 1.5) + 20;
+
+    const mesmaColecao = cartaA.colecao && cartaB.colecao && cartaA.colecao === cartaB.colecao;
+    const grupos = [
+        typeof GRUPO_CANCELADOS !== "undefined" ? GRUPO_CANCELADOS : [],
+        typeof GRUPO_WEB_FAMOSOS !== "undefined" ? GRUPO_WEB_FAMOSOS : [],
+        typeof GRUPO_ADCS !== "undefined" ? GRUPO_ADCS : [],
+        typeof GRUPO_TANKS !== "undefined" ? GRUPO_TANKS : [],
+        typeof GRUPO_MAGOS !== "undefined" ? GRUPO_MAGOS : []
+    ];
+    let mesmoGrupo = mesmaColecao;
+    if (!mesmoGrupo) {
+        for (const g of grupos) {
+            if (g.includes(cartaA.nome) && g.includes(cartaB.nome)) {
+                mesmoGrupo = true;
+                break;
+            }
+        }
+        if ((cartaA.colecao === "cria" || cartaA.colecao === "cria_prime") &&
+            (cartaB.colecao === "cria" || cartaB.colecao === "cria_prime")) {
+            mesmoGrupo = true;
+        }
+    }
+
+    if (mesmoGrupo) {
+        chipsBase = Math.floor(chipsBase * 1.35) + 15;
+        chipsBonus = Math.floor(chipsBonus * 1.4) + 10;
+        multBonus = Math.floor(multBonus * 1.5) + 3;
+    }
+
+    const nomeA = (cartaA.nome || "A").split(" ")[0];
+    const nomeB = (cartaB.nome || "B").split(" ")[0];
+    const nomeFusao = mesmoGrupo ? `⚡ ${nomeA} + ${nomeB}` : `${nomeA} + ${nomeB}`;
+    const memeFusao = mesmoGrupo
+        ? `FUSÃO DE GRUPO LENDÁRIA: ${cartaA.meme || ""} ⚡ ${cartaB.meme || ""}`
+        : `FUSÃO LENDÁRIA: ${cartaA.meme || ""} ⚡ ${cartaB.meme || ""}`;
+
+    return {
+        nome: nomeFusao,
+        meme: memeFusao,
+        foto: cartaA.foto,
+        fotoA: cartaA.foto,
+        fotoB: cartaB.foto,
+        chips: chipsBase,
+        chipsBonus: chipsBonus,
+        multBonus: multBonus,
+        colecao: "fusao",
+        origemA: cartaA.nome,
+        origemB: cartaB.nome,
+        mesmoGrupo: !!mesmoGrupo,
+        edicao: cartaA.edicao || cartaB.edicao || null
+    };
 }

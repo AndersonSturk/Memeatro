@@ -17,7 +17,8 @@ let gameState = {
     deck: [],
     hand: [],
     selectedCards: [],
-    ownedJokers: []
+    ownedJokers: [],
+    fusoesRealizadas: 0
 };
 
 let valoresExibidos = { score: 0, money: 10 };

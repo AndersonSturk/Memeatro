@@ -465,18 +465,31 @@ function abrirAltarDeFusao() {
         overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); display:none; justify-content:center; align-items:center; z-index:9999;";
         
         overlay.innerHTML = `
-            <div class="altar-painel" style="background:#0f172a; border:2px solid #f59e0b; border-radius:12px; padding:24px; max-width:650px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 0 25px rgba(245,158,11,0.3); color:#f8fafc;">
+            <div class="altar-painel" style="background:#0f172a; border:2px solid #f59e0b; border-radius:12px; padding:24px; max-width:720px; width:95%; max-height:85vh; overflow-y:auto; box-shadow:0 0 25px rgba(245,158,11,0.3); color:#f8fafc;">
                 <div class="altar-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #334155; padding-bottom:10px;">
                     <div class="altar-titulo" style="font-size:1.4rem; font-weight:bold; color:#fbbf24;">🔥 Altar de Fusão 🔥</div>
                     <button class="altar-fechar" style="background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer;" onclick="fecharAltarDeFusao()">✕</button>
                 </div>
-                <div class="altar-desc" style="color:#94a3b8; font-size:0.9rem; margin-bottom:16px;">Combine 2 cartas idênticas para fortalecer a restante (+25 Chips, +4 Mult).</div>
-                <div class="altar-grid" id="grid-altar-cartas" style="display:flex; flex-wrap:wrap; gap:16px; justify-content:center;"></div>
+                <div class="altar-desc" style="color:#94a3b8; font-size:0.9rem; margin-bottom:12px;">
+                    <b>Idênticas</b>: fortalece a carta (+25 Chips, +4 Mult)<br>
+                    <b>Diferentes</b>: cria FUSÃO LENDÁRIA com as duas fotos originais lado a lado (stats poderosas)<br>
+                    <b>Mesmo grupo</b>: fusão ainda mais forte!
+                </div>
+                <div id="selecao-fusao" style="display:flex; gap:12px; justify-content:center; margin-bottom:16px; min-height:120px; align-items:center; background:#1e293b; border-radius:8px; padding:10px;">
+                    <div id="slot-fusao-1" style="width:100px; height:140px; border:2px dashed #475569; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:0.8rem;">1ª carta</div>
+                    <div style="font-size:1.5rem; color:#fbbf24;">+</div>
+                    <div id="slot-fusao-2" style="width:100px; height:140px; border:2px dashed #475569; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:0.8rem;">2ª carta</div>
+                </div>
+                <button id="btn-confirmar-fusao" onclick="confirmarFusaoSelecionada()" style="display:none; width:100%; background:linear-gradient(135deg,#f59e0b,#d97706); color:#0f172a; font-weight:bold; border:none; padding:12px; border-radius:8px; cursor:pointer; margin-bottom:16px; font-size:1rem;">
+                    🔀 CONFIRMAR FUSÃO
+                </button>
+                <div class="altar-grid" id="grid-altar-cartas" style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center;"></div>
             </div>
         `;
         document.body.appendChild(overlay);
     }
 
+    window._fusaoSelecionada = [];
     renderizarAltar();
     overlay.style.display = "flex";
 }
@@ -484,6 +497,7 @@ function abrirAltarDeFusao() {
 function fecharAltarDeFusao() {
     const overlay = document.getElementById("overlay-altar");
     if (overlay) overlay.style.display = "none";
+    window._fusaoSelecionada = [];
 }
 
 function renderizarAltar() {
@@ -491,59 +505,146 @@ function renderizarAltar() {
     if (!grid) return;
     grid.innerHTML = "";
 
-    const gruposDeCartas = gameState.cartasDesbloqueadasRun.reduce((acc, card) => {
-        acc[card.nome] = acc[card.nome] || [];
-        acc[card.nome].push(card);
-        return acc;
-    }, {});
+    atualizarSlotsFusao();
 
-    const gruposParaFusao = Object.values(gruposDeCartas).filter(grupo => grupo.length >= 2);
-
-    if (gruposParaFusao.length === 0) {
-        grid.innerHTML = `<div style="color:#64748b; padding:20px; font-style:italic;">Você não possui cartas duplicadas para fundir.</div>`;
+    if (!gameState.cartasDesbloqueadasRun || gameState.cartasDesbloqueadasRun.length < 2) {
+        grid.innerHTML = `<div style="color:#64748b; padding:20px; font-style:italic;">Você precisa de pelo menos 2 cartas para fundir.</div>`;
         return;
     }
 
-    gruposParaFusao.forEach(grupo => {
-        const cardRepresentante = grupo[0];
-        const containerGrupo = document.createElement("div");
-        containerGrupo.style.cssText = "background:#1e293b; border:1px solid #475569; padding:12px; border-radius:8px; display:flex; flex-direction:column; align-items:center; gap:8px;";
+    gameState.cartasDesbloqueadasRun.forEach((card, idx) => {
+        const container = document.createElement("div");
+        container.style.cssText = "background:#1e293b; border:1px solid #475569; padding:8px; border-radius:8px; cursor:pointer; transition:0.2s;";
+        container.onmouseover = () => container.style.borderColor = "#f59e0b";
+        container.onmouseout = () => container.style.borderColor = "#475569";
 
-        const cardEl = criarElementoCarta(cardRepresentante);
-        
-        const infoGrupo = document.createElement("div");
-        infoGrupo.style.cssText = "display:flex; justify-content:space-between; width:100%; align-items:center;";
-        infoGrupo.innerHTML = `<span style="font-weight:bold; color:#fbbf24;">x${grupo.length}</span>`;
-        
-        const btnFusao = document.createElement("button");
-        btnFusao.style.cssText = "background:#f59e0b; color:#0f172a; font-weight:bold; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;";
-        btnFusao.innerText = "Fundir";
-        btnFusao.onclick = () => executarFusao(cardRepresentante.nome);
+        const cardEl = criarElementoCarta(card, { classeExtra: "pequena" });
+        container.appendChild(cardEl);
 
-        infoGrupo.appendChild(btnFusao);
-        containerGrupo.appendChild(cardEl);
-        containerGrupo.appendChild(infoGrupo);
-        grid.appendChild(containerGrupo);
+        container.onclick = () => selecionarCartaParaFusao(idx);
+        grid.appendChild(container);
     });
 }
 
-function executarFusao(nomeCarta) {
-    const idx1 = gameState.cartasDesbloqueadasRun.findIndex(c => c.nome === nomeCarta);
-    const idx2 = gameState.cartasDesbloqueadasRun.findIndex((c, i) => c.nome === nomeCarta && i !== idx1);
+function selecionarCartaParaFusao(idx) {
+    if (!window._fusaoSelecionada) window._fusaoSelecionada = [];
 
-    if (idx1 === -1 || idx2 === -1) return;
+    const jaSelecionada = window._fusaoSelecionada.indexOf(idx);
+    if (jaSelecionada !== -1) {
+        window._fusaoSelecionada.splice(jaSelecionada, 1);
+    } else {
+        if (window._fusaoSelecionada.length >= 2) {
+            window._fusaoSelecionada.shift();
+        }
+        window._fusaoSelecionada.push(idx);
+    }
+    atualizarSlotsFusao();
+}
 
-    const cartaSobrevivente = gameState.cartasDesbloqueadasRun[idx1];
-    cartaSobrevivente.chipsBonus = (cartaSobrevivente.chipsBonus || 0) + 25;
-    cartaSobrevivente.multBonus = (cartaSobrevivente.multBonus || 0) + 4;
+function atualizarSlotsFusao() {
+    const slot1 = document.getElementById("slot-fusao-1");
+    const slot2 = document.getElementById("slot-fusao-2");
+    const btn = document.getElementById("btn-confirmar-fusao");
+    if (!slot1 || !slot2) return;
 
-    gameState.cartasDesbloqueadasRun.splice(idx2, 1);
+    const sel = window._fusaoSelecionada || [];
+
+    if (sel[0] !== undefined && gameState.cartasDesbloqueadasRun[sel[0]]) {
+        const c = gameState.cartasDesbloqueadasRun[sel[0]];
+        slot1.innerHTML = "";
+        slot1.appendChild(criarElementoCarta(c, { classeExtra: "pequena" }));
+        slot1.style.border = "2px solid #f59e0b";
+    } else {
+        slot1.innerHTML = "1ª carta";
+        slot1.style.border = "2px dashed #475569";
+    }
+
+    if (sel[1] !== undefined && gameState.cartasDesbloqueadasRun[sel[1]]) {
+        const c = gameState.cartasDesbloqueadasRun[sel[1]];
+        slot2.innerHTML = "";
+        slot2.appendChild(criarElementoCarta(c, { classeExtra: "pequena" }));
+        slot2.style.border = "2px solid #f59e0b";
+    } else {
+        slot2.innerHTML = "2ª carta";
+        slot2.style.border = "2px dashed #475569";
+    }
+
+    if (btn) {
+        if (sel.length === 2) {
+            if (typeof gameState.fusoesRealizadas !== "number") gameState.fusoesRealizadas = 0;
+            const custo = 8 + (gameState.fusoesRealizadas * 4);
+            btn.innerText = `🔀 CONFIRMAR FUSÃO ($${custo})`;
+            btn.style.display = "block";
+            if ((gameState.money || 0) < custo) {
+                btn.style.opacity = "0.5";
+                btn.style.cursor = "not-allowed";
+            } else {
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+            }
+        } else {
+            btn.style.display = "none";
+        }
+    }
+}
+
+function confirmarFusaoSelecionada() {
+    const sel = window._fusaoSelecionada || [];
+    if (sel.length !== 2) return;
+
+    const cartaA = gameState.cartasDesbloqueadasRun[sel[0]];
+    const cartaB = gameState.cartasDesbloqueadasRun[sel[1]];
+    if (!cartaA || !cartaB) return;
+
+    if (typeof gameState.fusoesRealizadas !== "number") gameState.fusoesRealizadas = 0;
+    const custo = 8 + (gameState.fusoesRealizadas * 4);
+
+    if ((gameState.money || 0) < custo) {
+        alert(`Fusão custa $${custo}. Você tem apenas $${gameState.money || 0}.`);
+        return;
+    }
+
+    gameState.money -= custo;
+    gameState.fusoesRealizadas += 1;
+
+    const indices = sel.slice().sort((a,b) => b - a);
+    indices.forEach(i => gameState.cartasDesbloqueadasRun.splice(i, 1));
+
+    if (cartaA.nome === cartaB.nome) {
+        const nova = { ...cartaA };
+        nova.chipsBonus = (nova.chipsBonus || 0) + 25;
+        nova.multBonus = (nova.multBonus || 0) + 4;
+        gameState.cartasDesbloqueadasRun.push(nova);
+    } else {
+        if (typeof criarCartaFundida === "function") {
+            const fundida = criarCartaFundida(cartaA, cartaB);
+            gameState.cartasDesbloqueadasRun.push(fundida);
+        } else {
+            const fundida = {
+                nome: `${cartaA.nome.split(" ")[0]} + ${cartaB.nome.split(" ")[0]}`,
+                meme: "FUSÃO LENDÁRIA",
+                foto: cartaA.foto,
+                fotoA: cartaA.foto,
+                fotoB: cartaB.foto,
+                chips: 60,
+                chipsBonus: 30,
+                multBonus: 8,
+                colecao: "fusao"
+            };
+            gameState.cartasDesbloqueadasRun.push(fundida);
+        }
+    }
 
     if (typeof tocarSfx === "function") tocarSfx("multFogo");
+    if (typeof atualizarHUD === "function") atualizarHUD();
+    window._fusaoSelecionada = [];
     renderizarAltar();
 }
 
-// 💀 ALTAR DO SACRIFÍCIO
+function executarFusao(nomeCarta) {
+    // legado - não usado
+}
+
 function abrirAltarDeSacrificio() {
     let overlay = document.getElementById("overlay-sacrificio");
 
