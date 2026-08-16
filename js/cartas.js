@@ -191,7 +191,7 @@ const DADOS_UPGRADES = [
     { id: "u_mult", nome: "Injeção de Mult", desc: "Escolha uma carta do seu baralho e grave +3 Mult fixo nela, para sempre.", preco: 7, tipo: "mult", valor: 3 }
 ];
 
-// 🪐 CARTAS PLANETA (Mapeadas corretamente para as mãos do jogo)
+// 🪐 CARTAS PLANETA
 const CARTAS_PLANETA = [
     { id: "planeta_par", nome: "Planeta dos Gêmeos", desc: "Aumenta o nível da mão 'Par de Amigos'.", preco: 4, alvoMao: "Par de Amigos", bonus: { chips: 15, mult: 1 } },
     { id: "planeta_trinca", nome: "Planeta da Revoada", desc: "Aumenta o nível da mão 'Trinca de Memes'.", preco: 5, alvoMao: "Trinca de Memes", bonus: { chips: 20, mult: 2 } },
@@ -229,8 +229,7 @@ function nomeDoAnte(round) {
     return volta > 1 ? `${tema} ${volta}x` : tema;
 }
 
-
-// CSS da fusão lado a lado (injetado automaticamente)
+// CSS da fusão injetado automaticamente
 (function injetarCSSFusao() {
     if (typeof document === "undefined") return;
     if (document.getElementById("css-fusao-memeatro")) return;
@@ -271,7 +270,7 @@ function nomeDoAnte(round) {
 
 // 🃏 Cria o elemento visual de uma carta
 function criarElementoCarta(card, opcoes = {}) {
-    const totalChips = (card.chips || 0) + (card.chipsBonus || 0);
+    const totalChips = (Number(card.chips) || 0) + (Number(card.chipsBonus) || 0);
     const foiUpgradada = (card.chipsBonus || 0) > 0 || (card.multBonus || 0) > 0 || !!card.edicao;
     const ehPrime = card.colecao === "cria_prime" || (card.nome && card.nome.includes("Prime"));
     const ehFusao = !!card.fotoA && !!card.fotoB;
@@ -319,7 +318,7 @@ function criarElementoCarta(card, opcoes = {}) {
     return el;
 }
 
-// 🔀 Cria uma carta fundida PODEROSA (usa as fotos originais lado a lado)
+// 🔀 Cria uma carta fundida
 function criarCartaFundida(cartaA, cartaB) {
     let chipsBase = Math.floor(((Number(cartaA.chips) || 0) + (Number(cartaB.chips) || 0)) * 0.75) + 35;
     let multBonus = Math.floor(((Number(cartaA.multBonus) || 0) + (Number(cartaB.multBonus) || 0)) / 1.5) + 6;

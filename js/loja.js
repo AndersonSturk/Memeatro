@@ -9,10 +9,10 @@ let packAtivoAberto = null;
 let upgradeAtivo = null;
 
 const DADOS_PACKS = [
-    { id: "p_lol", nome: "Booster Pack: League of Legends", desc: "Contém de 4 a 8 cartas aleatórias de Campeões do LoL.", preco: 5, pool: () => POOL_PACK_LOL, peso: 45 },
-    { id: "p_streamer", nome: "Booster Pack: Sindicato dos Streamers", desc: "Contém de 4 a 8 cartas aleatórias da elite das Streams.", preco: 6, pool: () => POOL_PACK_STREAMERS, peso: 30 },
-    { id: "p_raro", nome: "Booster Pack: Memes Lendários", desc: "Contém de 4 a 8 cartas aleatórias dos maiores caos da internet.", preco: 8, pool: () => POOL_PACK_MEMES_LENDARIOS, peso: 25 },
-    { id: "p_cria_prime", nome: "Booster Pack: Gank dos Crias PRIME", desc: "Contém de 4 a 8 cartas EVOLUÍDAS e apelonas dos deuses da call!", preco: 15, pool: () => POOL_PACK_CRIA_PRIME, raro: true }
+    { id: "p_lol", nome: "Booster Pack: League of Legends", desc: "Contém de 4 a 8 cartas aleatórias de Campeões do LoL.", preco: 5, pool: () => typeof POOL_PACK_LOL !== "undefined" ? POOL_PACK_LOL : [], peso: 45 },
+    { id: "p_streamer", nome: "Booster Pack: Sindicato dos Streamers", desc: "Contém de 4 a 8 cartas aleatórias da elite das Streams.", preco: 6, pool: () => typeof POOL_PACK_STREAMERS !== "undefined" ? POOL_PACK_STREAMERS : [], peso: 30 },
+    { id: "p_raro", nome: "Booster Pack: Memes Lendários", desc: "Contém de 4 a 8 cartas aleatórias dos maiores caos da internet.", preco: 8, pool: () => typeof POOL_PACK_MEMES_LENDARIOS !== "undefined" ? POOL_PACK_MEMES_LENDARIOS : [], peso: 25 },
+    { id: "p_cria_prime", nome: "Booster Pack: Gank dos Crias PRIME", desc: "Contém de 4 a 8 cartas EVOLUÍDAS e apelonas dos deuses da call!", preco: 15, pool: () => typeof POOL_PACK_CRIA_PRIME !== "undefined" ? POOL_PACK_CRIA_PRIME : [], raro: true }
 ];
 
 function limparVitrineLoja() {
@@ -220,8 +220,9 @@ function venderJoker(index) {
     gameState.ownedJokers.splice(index, 1);
 
     if (typeof tocarSfx === "function") tocarSfx("moeda");
-    renderizarJokersEquipadosLoja();
+    renderizarLoja();
     if (typeof renderizarJokersNaPartida === "function") renderizarJokersNaPartida();
+    if (typeof atualizarInterface === "function") atualizarInterface();
 }
 
 function rerollLoja() {
@@ -233,6 +234,7 @@ function rerollLoja() {
         limparVitrineLoja();
         gerarItensVitrine();
         renderizarLoja();
+        if (typeof atualizarInterface === "function") atualizarInterface();
     } else {
         if (typeof tocarSfx === "function") tocarSfx("erro");
         alert("Sem moedas para atualizar a loja!");
@@ -254,6 +256,7 @@ function comprarJoker(index) {
         if (typeof tocarSfx === "function") tocarSfx("comprar");
         renderizarLoja();
         if (typeof renderizarJokersNaPartida === "function") renderizarJokersNaPartida();
+        if (typeof atualizarInterface === "function") atualizarInterface();
     } else {
         if (typeof tocarSfx === "function") tocarSfx("erro");
         alert("Sem moedas suficientes!");
@@ -292,15 +295,20 @@ function comprarPack(index) {
             packClicavel.classList.remove("explodir", "pack-gold-glow");
             overlay.classList.remove("booster-prime-active");
             
-            document.getElementById("booster-cartas-spawn").innerHTML = "";
-            document.getElementById("btn-fechar-booster").style.display = "none";
+            const spawnContainer = document.getElementById("booster-cartas-spawn");
+            if (spawnContainer) spawnContainer.innerHTML = "";
+            const btnFechar = document.getElementById("btn-fechar-booster");
+            if (btnFechar) btnFechar.style.display = "none";
 
-            if (pack.raro) {
-                overlay.classList.add("booster-prime-active");
-                packClicavel.classList.add("pack-gold-glow");
-                document.getElementById("txt-titulo-booster").innerHTML = "👑 <span style='color:#fde047;'>PACOTE PRIME LENDÁRIO!</span> CLIQUE PARA RASGAR! 👑";
-            } else {
-                document.getElementById("txt-titulo-booster").innerText = "CLIQUE NO PACOTE PARA RASGAR!";
+            const txtTitulo = document.getElementById("txt-titulo-booster");
+            if (txtTitulo) {
+                if (pack.raro) {
+                    overlay.classList.add("booster-prime-active");
+                    packClicavel.classList.add("pack-gold-glow");
+                    txtTitulo.innerHTML = "👑 <span style='color:#fde047;'>PACOTE PRIME LENDÁRIO!</span> CLIQUE PARA RASGAR! 👑";
+                } else {
+                    txtTitulo.innerText = "CLIQUE NO PACOTE PARA RASGAR!";
+                }
             }
         } else {
             alert(`📦 Pack comprado!\nCartas adicionadas: ${cartasSorteadasTemporarias.map(c => c.nome).join(', ')}`);
@@ -308,6 +316,7 @@ function comprarPack(index) {
 
         vitrinePacks[index] = null;
         renderizarLoja();
+        if (typeof atualizarInterface === "function") atualizarInterface();
     } else {
         if (typeof tocarSfx === "function") tocarSfx("erro");
         alert("Sem moedas suficientes para abrir o Booster!");
@@ -321,7 +330,6 @@ function comprarPlaneta(index) {
     if (gameState.money >= planeta.preco) {
         gameState.money -= planeta.preco;
         
-        // Aplica o upgrade permanentemente na tabela de pontuações de mãos
         const alvo = planeta.alvoMao;
         if (typeof MAOS_POKER !== "undefined" && MAOS_POKER[alvo]) {
             MAOS_POKER[alvo].chips += planeta.bonus.chips;
@@ -334,6 +342,7 @@ function comprarPlaneta(index) {
 
         alert(`🪐 ${planeta.nome} Usado!\n+${planeta.bonus.chips} Chips e +${planeta.bonus.mult} Mult para '${alvo}'.`);
         renderizarLoja();
+        if (typeof atualizarInterface === "function") atualizarInterface();
     } else {
         if (typeof tocarSfx === "function") tocarSfx("erro");
         alert("Sem moedas suficientes!");
@@ -354,22 +363,25 @@ function dispararAnimacaoPack() {
         setTimeout(() => overlay.classList.remove("shake-lendario"), 400);
     }
 
-    if (ehPrime) {
-        document.getElementById("txt-titulo-booster").innerHTML = "⚡ <span style='color:#fde047;'>DESPERTANDO OS DEUSES DA CALL...</span> ⚡";
-        if (typeof tocarSfx === "function") tocarSfx("abrirPacotePrime");
-    } else {
-        document.getElementById("txt-titulo-booster").innerText = "RASGANDO O PACOTE...";
-        if (typeof tocarSfx === "function") tocarSfx("abrirPacote");
+    const txtTitulo = document.getElementById("txt-titulo-booster");
+    if (txtTitulo) {
+        if (ehPrime) {
+            txtTitulo.innerHTML = "⚡ <span style='color:#fde047;'>DESPERTANDO OS DEUSES DA CALL...</span> ⚡";
+            if (typeof tocarSfx === "function") tocarSfx("abrirPacotePrime");
+        } else {
+            txtTitulo.innerText = "RASGANDO O PACOTE...";
+            if (typeof tocarSfx === "function") tocarSfx("abrirPacote");
+        }
     }
 
     const spawnContainer = document.getElementById("booster-cartas-spawn");
-    spawnContainer.innerHTML = "";
+    if (spawnContainer) spawnContainer.innerHTML = "";
 
     cartasSorteadasTemporarias.forEach((card, idx) => {
         const atraso = 0.3 + idx * 0.25;
         const classeExtraCard = ehPrime ? "carta-revelada-prime" : "carta-revelada";
         
-        if (typeof criarElementoCarta === "function") {
+        if (typeof criarElementoCarta === "function" && spawnContainer) {
             const cardEl = criarElementoCarta(card, { classeExtra: classeExtraCard });
             cardEl.style.animationDelay = atraso + "s";
             spawnContainer.appendChild(cardEl);
@@ -384,19 +396,23 @@ function dispararAnimacaoPack() {
     });
 
     setTimeout(() => {
-        document.getElementById("btn-fechar-booster").style.display = "block";
+        const btnFechar = document.getElementById("btn-fechar-booster");
+        if (btnFechar) btnFechar.style.display = "block";
         packEl.style.display = "none";
         
-        if (ehPrime) {
-            document.getElementById("txt-titulo-booster").innerHTML = "👑 <span style='color:#fde047; font-size:1.4em;'>🔥 PODER CRIA ABSOLUTO DESBLOQUEADO! 🔥</span> 👑";
-        } else {
-            document.getElementById("txt-titulo-booster").innerText = "🔥 NOVAS CARTAS DESBLOQUEADAS! 🔥";
+        if (txtTitulo) {
+            if (ehPrime) {
+                txtTitulo.innerHTML = "👑 <span style='color:#fde047; font-size:1.4em;'>🔥 PODER CRIA ABSOLUTO DESBLOQUEADO! 🔥</span> 👑";
+            } else {
+                txtTitulo.innerText = "🔥 NOVAS CARTAS DESBLOQUEADAS! 🔥";
+            }
         }
     }, 1400);
 }
 
 function fecharOverlayBooster() {
-    document.getElementById("overlay-booster").style.display = "none";
+    const overlay = document.getElementById("overlay-booster");
+    if (overlay) overlay.style.display = "none";
     cartasSorteadasTemporarias = [];
 }
 
@@ -418,6 +434,7 @@ function comprarUpgrade(index) {
     vitrineUpgrades[index] = null;
     if (typeof tocarSfx === "function") tocarSfx("comprar");
     renderizarLoja();
+    if (typeof atualizarInterface === "function") atualizarInterface();
 
     upgradeAtivo = upgrade;
     abrirSeletorDeCarta(upgrade);
@@ -444,6 +461,7 @@ function abrirSeletorDeCarta(upgrade) {
 
 function aplicarUpgrade(idxCarta) {
     const card = gameState.cartasDesbloqueadasRun[idxCarta];
+    if (!card || !upgradeAtivo) return;
 
     if (upgradeAtivo.tipo === "chips") card.chipsBonus = (card.chipsBonus || 0) + upgradeAtivo.valor;
     else if (upgradeAtivo.tipo === "mult") card.multBonus = (card.multBonus || 0) + upgradeAtivo.valor;
@@ -472,7 +490,7 @@ function abrirAltarDeFusao() {
                 </div>
                 <div class="altar-desc" style="color:#94a3b8; font-size:0.9rem; margin-bottom:12px;">
                     <b>Idênticas</b>: fortalece a carta (+25 Chips, +4 Mult)<br>
-                    <b>Diferentes</b>: cria FUSÃO LENDÁRIA com as duas fotos originais lado a lado (stats poderosas)<br>
+                    <b>Diferentes</b>: cria FUSÃO LENDÁRIA com as duas fotos originais lado a lado<br>
                     <b>Mesmo grupo</b>: fusão ainda mais forte!
                 </div>
                 <div id="selecao-fusao" style="display:flex; gap:12px; justify-content:center; margin-bottom:16px; min-height:120px; align-items:center; background:#1e293b; border-radius:8px; padding:10px;">
@@ -573,7 +591,7 @@ function atualizarSlotsFusao() {
         if (sel.length === 2) {
             if (typeof gameState.fusoesRealizadas !== "number") gameState.fusoesRealizadas = 0;
             const custo = 8 + (gameState.fusoesRealizadas * 4);
-            btn.innerText = `🔀 CONFIRMAR FUSÃO ($${custo})`;
+            btn.innerText = `🔀 CONFIRMAR FUSÃO (🪙 ${custo})`;
             btn.style.display = "block";
             if ((gameState.money || 0) < custo) {
                 btn.style.opacity = "0.5";
@@ -600,7 +618,7 @@ function confirmarFusaoSelecionada() {
     const custo = 8 + (gameState.fusoesRealizadas * 4);
 
     if ((gameState.money || 0) < custo) {
-        alert(`Fusão custa $${custo}. Você tem apenas $${gameState.money || 0}.`);
+        alert(`Fusão custa 🪙 ${custo}. Você tem apenas 🪙 ${gameState.money || 0}.`);
         return;
     }
 
@@ -636,13 +654,9 @@ function confirmarFusaoSelecionada() {
     }
 
     if (typeof tocarSfx === "function") tocarSfx("multFogo");
-    if (typeof atualizarHUD === "function") atualizarHUD();
+    if (typeof atualizarInterface === "function") atualizarInterface();
     window._fusaoSelecionada = [];
     renderizarAltar();
-}
-
-function executarFusao(nomeCarta) {
-    // legado - não usado
 }
 
 function abrirAltarDeSacrificio() {
@@ -709,7 +723,6 @@ function executarSacrificio(indexSacrificado) {
     if (!gameState.cartasDesbloqueadasRun || gameState.cartasDesbloqueadasRun.length <= 1) return;
 
     const cartaSacrificada = gameState.cartasDesbloqueadasRun[indexSacrificado];
-    
     gameState.cartasDesbloqueadasRun.splice(indexSacrificado, 1);
 
     const idxBeneficiada = Math.floor(Math.random() * gameState.cartasDesbloqueadasRun.length);

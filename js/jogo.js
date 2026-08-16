@@ -75,7 +75,7 @@ const MAOS_POKER = {
     "Combo das Casadas": { chips: 15, mult: 3 },
     "Panelinha da Call (Trio)": { chips: 30, mult: 3 },
     "Panelinha da Call (Quadra)": { chips: 50, mult: 5 },
-    "Panelinha da Call (Gank Máximo)": { chips: 75, mult: 8 },
+    "Panelinha da Call (Gank Máximo)": { chips: 75, mult: 8 }
 };
 
 const IMAGENS_PREVIEW_MAOS = {
@@ -131,7 +131,6 @@ function reiniciarAnimacao(elemento, classe) {
 }
 
 function alternarTela(idTela, manterSfx = false) {
-    // Só para os efeitos se NÃO for pra manter o som da vitória/derrota
     if (!manterSfx && typeof pararTodosEfeitos === "function") {
         pararTodosEfeitos();
     }
@@ -141,7 +140,6 @@ function alternarTela(idTela, manterSfx = false) {
         else if (idTela === "tela-partida") tocarMusica("partida");
         else if (idTela === "tela-loja") tocarMusica("loja");
     }
-
 
     const loading = document.getElementById("tela-loading");
     const todasTelas = document.querySelectorAll('.tela');
@@ -389,53 +387,101 @@ function selecionarCarta(card) {
 // =============================================================================
 
 function eDoGrupoCria(card) {
-    if (!card || !card.colecao) return false;
-    return card.colecao === "cria" || card.colecao === "cria_prime";
+    if (!card) return false;
+    if (card.colecao === "cria" || card.colecao === "cria_prime") return true;
+    if (card.colecao === "fusao" && card.mesmoGrupo) return true;
+    const nomesCria = ["Biel", "Saches", "Sanches", "Roger", "Thiago", "Victor", "Anderson", "Valter", "Panda", "Rivotril"];
+    return nomesCria.some(n => (card.nome || "").includes(n));
+}
+
+function eDoGrupoLol(card) {
+    if (!card) return false;
+    if (card.colecao === "lol") return true;
+    const lolChampions = typeof POOL_PACK_LOL !== "undefined" ? POOL_PACK_LOL.map(c => c.nome) : [];
+    return lolChampions.some(n => (card.nome || "").includes(n));
+}
+
+function eDoGrupoStreamer(card) {
+    if (!card) return false;
+    if (card.colecao === "streamer") return true;
+    const streamers = typeof POOL_PACK_STREAMERS !== "undefined" ? POOL_PACK_STREAMERS.map(c => c.nome) : [];
+    return streamers.some(n => (card.nome || "").includes(n));
+}
+
+function eDoGrupoMeme(card) {
+    if (!card) return false;
+    if (card.colecao === "meme_base" || card.colecao === "meme_raro") return true;
+    const memes = typeof POOL_PACK_MEMES_LENDARIOS !== "undefined" ? POOL_PACK_MEMES_LENDARIOS.map(c => c.nome) : [];
+    return memes.some(n => (card.nome || "").includes(n));
 }
 
 function detectarMelhorMaoEstatistica(cartas) {
+    if (!cartas || cartas.length === 0) return "Carta Alta";
+
     const nomes = cartas.map(c => c.nome || "");
-    const colecoes = cartas.map(c => c.colecao || "");
-    const qtdGrupo = cartas.filter(eDoGrupoCria).length;
-    const qtdCancelados = typeof GRUPO_CANCELADOS !== "undefined" ? nomes.filter(n => GRUPO_CANCELADOS.includes(n)).length : 0;
-    const qtdFamosos = typeof GRUPO_WEB_FAMOSOS !== "undefined" ? nomes.filter(n => GRUPO_WEB_FAMOSOS.includes(n)).length : 0;
+    const qtdTotal = cartas.length;
 
-    const qtdLolTotal = colecoes.filter(c => c === "lol").length;
-    const qtdStreamerTotal = colecoes.filter(c => c === "streamer").length;
-    const qtdMemeTotal = colecoes.filter(c => c === "meme_base" || c === "meme_raro").length;
+    const qtdCrias = cartas.filter(eDoGrupoCria).length;
+    const qtdLol = cartas.filter(eDoGrupoLol).length;
+    const qtdStreamers = cartas.filter(eDoGrupoStreamer).length;
+    const qtdMemes = cartas.filter(eDoGrupoMeme).length;
 
-    const temAdc = typeof GRUPO_ADCS !== "undefined" ? nomes.filter(n => GRUPO_ADCS.includes(n)).length : 0;
-    const temTank = typeof GRUPO_TANKS !== "undefined" ? nomes.filter(n => GRUPO_TANKS.includes(n)).length : 0;
-    const temMago = typeof GRUPO_MAGOS !== "undefined" ? nomes.filter(n => GRUPO_MAGOS.includes(n)).length : 0;
+    const cancelados = typeof GRUPO_CANCELADOS !== "undefined" ? GRUPO_CANCELADOS : [];
+    const webFamosos = typeof GRUPO_WEB_FAMOSOS !== "undefined" ? GRUPO_WEB_FAMOSOS : [];
+    const adcs = typeof GRUPO_ADCS !== "undefined" ? GRUPO_ADCS : [];
+    const tanks = typeof GRUPO_TANKS !== "undefined" ? GRUPO_TANKS : [];
+    const magos = typeof GRUPO_MAGOS !== "undefined" ? GRUPO_MAGOS : [];
+
+    const qtdCancelados = cartas.filter(c => cancelados.some(n => (c.nome || "").includes(n))).length;
+    const qtdFamosos = cartas.filter(c => webFamosos.some(n => (c.nome || "").includes(n))).length;
+    const qtdAdcs = cartas.filter(c => adcs.some(n => (c.nome || "").includes(n))).length;
+    const qtdTanks = cartas.filter(c => tanks.some(n => (c.nome || "").includes(n))).length;
+    const qtdMagos = cartas.filter(c => magos.some(n => (c.nome || "").includes(n))).length;
 
     const contagem = {}; 
-    nomes.forEach(nome => contagem[nome] = (contagem[nome] || 0) + 1);
-    const valoresRepetidos = Object.values(contagem).sort((a, b) => b - a);
+    nomes.forEach(nome => {
+        const nomeLimpo = nome.replace(" (Modo Turbo)", "").replace(" (CEO da Call)", "").replace(" (Faria Lima Bets)", "")
+                              .replace(" (O Trabalhador Lendário)", "").replace(" (O Implacável)", "")
+                              .replace(" (Amendoim Atômico)", "").replace(" (Challenger de Coração)", "")
+                              .replace(" (Lord Tryhard)", "").replace(" (O Invocado)", "").trim();
+        contagem[nomeLimpo] = (contagem[nomeLimpo] || 0) + 1;
+    });
+    const rep = Object.values(contagem).sort((a, b) => b - a);
 
-    if (qtdGrupo >= 5) return "Panelinha da Call (Gank Máximo)";
-    if (qtdGrupo === 4) return "Panelinha da Call (Quadra)";
-    if (qtdGrupo === 3) return "Panelinha da Call (Trio)";
-    
-    if (temTank >= 2 && temTank === nomes.length) return "Mão da Geladeira Brastemp";
-    if (temMago >= 2 && temMago === nomes.length) return "Circo de Esquizofrenia";
-    if (temAdc >= 2 && temAdc === nomes.length) return "Inimigos do Toque";
-    if (qtdStreamerTotal >= 2 && qtdStreamerTotal === nomes.length) return "Sindicato dos Streamers";
-    if (qtdCancelados >= 2 && qtdCancelados === nomes.length) return "Mão dos Cancelados";
-    if (qtdFamosos >= 2 && qtdFamosos === nomes.length) return "Banda de Web-Famosos";
+    // 1. Pôquer Clássico Alto (Quadras / Full House)
+    if (rep[0] >= 4) return "Quadra Suprema";
+    if (rep[0] === 3 && rep[1] >= 2) return "Full House de Call";
 
-    if (qtdStreamerTotal >= 1 && qtdMemeTotal >= 1) return "Combo do Clipe Viral";
-    if (qtdLolTotal >= 3) return "Fila Solo Q Solo";
-    
-    if (valoresRepetidos[0] >= 4) return "Quadra Suprema";
-    if (valoresRepetidos[0] === 3 && valoresRepetidos[1] === 2) return "Full House de Call";
-    if (valoresRepetidos[0] >= 3) return "Trinca de Memes";
-    
-    if (nomes.some(n => n.includes("Biel")) && nomes.some(n => n.includes("Saches") || n.includes("Thiago"))) return "Noite de Overclock";
-    if (nomes.some(n => n.includes("Victor")) && nomes.length > 1) return "Combo das Casadas";
-    
-    if (valoresRepetidos[0] === 2 && valoresRepetidos[1] === 2) return "Dois Pares";
-    if (valoresRepetidos[0] === 2) return "Par de Amigos";
-    
+    // 2. Panelinha da Call
+    if (qtdCrias >= 5) return "Panelinha da Call (Gank Máximo)";
+    if (qtdCrias === 4) return "Panelinha da Call (Quadra)";
+    if (qtdCrias === 3 && qtdTotal === 3) return "Panelinha da Call (Trio)";
+
+    // 3. Mãos Temáticas Específicas
+    const temBiel = nomes.some(n => n.includes("Biel"));
+    const temSanchesThiago = nomes.some(n => n.includes("Saches") || n.includes("Sanches") || n.includes("Thiago"));
+    if (temBiel && temSanchesThiago) return "Noite de Overclock";
+
+    const temVictor = nomes.some(n => n.includes("Victor"));
+    if (temVictor && qtdTotal >= 2) return "Combo das Casadas";
+
+    // 4. Combos de Grupos Fechados
+    if (qtdTanks >= 2 && qtdTanks === qtdTotal) return "Mão da Geladeira Brastemp";
+    if (qtdMagos >= 2 && qtdMagos === qtdTotal) return "Circo de Esquizofrenia";
+    if (qtdAdcs >= 2 && qtdAdcs === qtdTotal) return "Inimigos do Toque";
+    if (qtdStreamers >= 2 && qtdStreamers === qtdTotal) return "Sindicato dos Streamers";
+    if (qtdCancelados >= 2 && qtdCancelados === qtdTotal) return "Mão dos Cancelados";
+    if (qtdFamosos >= 2 && qtdFamosos === qtdTotal) return "Banda de Web-Famosos";
+
+    // 5. Combos Híbridos / Trincas
+    if (qtdStreamers >= 1 && qtdMemes >= 1) return "Combo do Clipe Viral";
+    if (qtdLol >= 3) return "Fila Solo Q Solo";
+    if (rep[0] >= 3) return "Trinca de Memes";
+
+    // 6. Pares
+    if (rep[0] >= 2 && rep[1] >= 2) return "Dois Pares";
+    if (rep[0] >= 2) return "Par de Amigos";
+
     return "Carta Alta";
 }
 
@@ -459,12 +505,14 @@ function calcularPontuacaoEmTempoReal() {
         const magos = typeof GRUPO_MAGOS !== "undefined" ? GRUPO_MAGOS : [];
 
         const nomes = gameState.selectedCards.map(c => c.nome || "");
+        const colecoes = gameState.selectedCards.map(c => c.colecao || "");
+        
         const contagemNomes = {}; 
         nomes.forEach(n => contagemNomes[n] = (contagemNomes[n] || 0) + 1);
 
         const contagemLol = {};
         gameState.selectedCards.forEach(c => { 
-            if (c.colecao === "lol") contagemLol[c.nome] = (contagemLol[c.nome] || 0) + 1; 
+            if (eDoGrupoLol(c)) contagemLol[c.nome] = (contagemLol[c.nome] || 0) + 1; 
         });
         const temTrincaMonoLol = Object.values(contagemLol).some(qtd => qtd >= 3);
 
@@ -475,26 +523,24 @@ function calcularPontuacaoEmTempoReal() {
             const cMultBonus = Number(c.multBonus) || 0;
 
             if (nomeMaoDetectada.startsWith("Panelinha da Call") && eDoGrupoCria(c)) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Mão da Geladeira Brastemp" && tanks.includes(c.nome)) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Circo de Esquizofrenia" && magos.includes(c.nome)) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Inimigos do Toque" && adcs.includes(c.nome)) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Sindicato dos Streamers" && c.colecao === "streamer") pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Fila Solo Q Solo" && c.colecao === "lol") pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Combo do Clipe Viral" && (c.colecao === "streamer" || c.colecao === "meme_base" || c.colecao === "meme_raro")) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Banda de Web-Famosos" && webFamosos.includes(c.nome)) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Mão dos Cancelados" && cancelados.includes(c.nome)) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Noite de Overclock" && c.nome && ["Biel", "Saches", "Thiago"].some(x => c.nome.includes(x))) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Combo das Casadas" && c.nome && (c.nome.includes("Victor") || eDoGrupoCria(c))) pertenceAoCombo = true;
-            
+            else if (nomeMaoDetectada === "Mão da Geladeira Brastemp" && tanks.some(n => c.nome.includes(n))) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Circo de Esquizofrenia" && magos.some(n => c.nome.includes(n))) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Inimigos do Toque" && adcs.some(n => c.nome.includes(n))) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Sindicato dos Streamers" && eDoGrupoStreamer(c)) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Fila Solo Q Solo" && eDoGrupoLol(c)) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Combo do Clipe Viral" && (eDoGrupoStreamer(c) || eDoGrupoMeme(c))) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Banda de Web-Famosos" && webFamosos.some(n => c.nome.includes(n))) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Mão dos Cancelados" && cancelados.some(n => c.nome.includes(n))) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Noite de Overclock") pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Combo das Casadas") pertenceAoCombo = true;
             else if (nomeMaoDetectada === "Quadra Suprema" && contagemNomes[c.nome] >= 4) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Full House de Call" && (contagemNomes[c.nome] === 3 || contagemNomes[c.nome] === 2)) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Full House de Call" && (contagemNomes[c.nome] >= 2)) pertenceAoCombo = true;
             else if (nomeMaoDetectada === "Trinca de Memes" && contagemNomes[c.nome] >= 3) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Dois Pares" && contagemNomes[c.nome] === 2) pertenceAoCombo = true;
-            else if (nomeMaoDetectada === "Par de Amigos" && contagemNomes[c.nome] === 2) pertenceAoCombo = true;
-            
+            else if (nomeMaoDetectada === "Dois Pares" && contagemNomes[c.nome] >= 2) pertenceAoCombo = true;
+            else if (nomeMaoDetectada === "Par de Amigos" && contagemNomes[c.nome] >= 2) pertenceAoCombo = true;
             else if (nomeMaoDetectada === "Carta Alta") {
                 const valorTotal = (card) => (Number(card.chips) || 0) + (Number(card.chipsBonus) || 0);
-                const maiorCard = gameState.selectedCards.reduce((prev, curr) => (valorTotal(prev) > valorTotal(curr)) ? prev : curr);
+                const maiorCard = gameState.selectedCards.reduce((prev, curr) => (valorTotal(prev) >= valorTotal(curr)) ? prev : curr, gameState.selectedCards[0]);
                 if (c.uid === maiorCard.uid) pertenceAoCombo = true;
             }
 
@@ -504,15 +550,16 @@ function calcularPontuacaoEmTempoReal() {
             }
         });
 
+        // Bônus Especiais de Personagens na Mesa
         if (nomes.some(n => n.includes("Kid")) && nomes.some(n => n.includes("Anderson"))) { baseChips += 40; baseMult += 4; }
         if (nomes.some(n => n.includes("Roger")) && nomes.some(n => n.includes("Nego Di"))) { baseChips -= 15; baseMult += 6; }
         if (nomes.some(n => n.includes("Ednaldo"))) { baseMult = 0; } 
         if (nomes.some(n => n.includes("Bora Bill"))) { multiplicadorFinalDoJoker *= 1.4; }
         if (nomes.some(n => n.includes("Cellbit")) && gameState.selectedCards.length === 1) { baseMult += 6; }
         if (nomes.some(n => n.includes("Gaules"))) { baseChips += (gameState.discards * 5); }
-        if (nomes.some(n => n.includes("Baiano")) && colecoes.includes("lol")) { baseMult += 6; }
+        if (nomes.some(n => n.includes("Baiano")) && gameState.selectedCards.some(eDoGrupoLol)) { baseMult += 6; }
 
-        const colecoes = gameState.selectedCards.map(c => c.colecao || "");
+        // Bônus de Coringas Equipados
         gameState.ownedJokers.forEach(j => {
             if (j.id === "j_clutch" && gameState.selectedCards.length === 1) baseMult += 8;
             if (j.id === "j_tilt" && nomes.some(n => n.includes("Biel"))) multiplicadorFinalDoJoker *= 2.5;
@@ -527,7 +574,7 @@ function calcularPontuacaoEmTempoReal() {
             if (j.id === "j_4_perfeito" && nomes.some(n => n.includes("Jhin")) && gameState.selectedCards.length === 4) baseMult += 50;
             if (j.id === "j_mono_champion" && temTrincaMonoLol) multiplicadorFinalDoJoker *= 2.5;
             if (j.id === "j_chat_restrito" && nomes.some(n => n.includes("Valter"))) baseChips += 80;
-            if (j.id === "j_gank_cria" && colecoes.some(c => c.includes("cria")) && colecoes.includes("lol")) baseMult += 8;
+            if (j.id === "j_gank_cria" && gameState.selectedCards.some(eDoGrupoCria) && gameState.selectedCards.some(eDoGrupoLol)) baseMult += 8;
         });
     }
 
@@ -688,7 +735,7 @@ document.getElementById("btn-play")?.addEventListener("click", () => {
         if (pt.mult >= 20 && typeof tocarSfx === "function") tocarSfx("multFogo");
 
         if (gameState.ownedJokers.some(j => j.id === "j_tf")) {
-            const qtdLolJogados = gameState.selectedCards.filter(c => c.colecao === "lol").length;
+            const qtdLolJogados = gameState.selectedCards.filter(eDoGrupoLol).length;
             if (qtdLolJogados > 0) gameState.money += qtdLolJogados;
         }
 
@@ -781,13 +828,18 @@ function carregarEstadoDoSave(saveData) {
     Object.assign(gameState, saveData);
     gameState.hands = gameState.hands ?? 4;
     gameState.discards = gameState.discards ?? 3;
+    gameState.startingDiscards = gameState.startingDiscards ?? gameState.discards;
+    gameState.targetScore = obterMetaAnte(gameState.round);
+    gameState.hand = [];
+    gameState.selectedCards = [];
+
     valoresExibidos = { score: gameState.currentScore || 0, money: gameState.money || 0 };
 
-    proximoRound();
-    gameState.round--; 
-    
+    montarBaralho();
+    comprarCartas();
     atualizarInterface();
     renderizarJokersNaPartida();
+    gerarPainelColaMaos();
     alternarTela("tela-partida");
     alert(`Jogo carregado no Ante ${gameState.round}.`);
 }
