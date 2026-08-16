@@ -463,9 +463,20 @@ function aplicarUpgrade(idxCarta) {
     const card = gameState.cartasDesbloqueadasRun[idxCarta];
     if (!card || !upgradeAtivo) return;
 
-    if (upgradeAtivo.tipo === "chips") card.chipsBonus = (card.chipsBonus || 0) + upgradeAtivo.valor;
-    else if (upgradeAtivo.tipo === "mult") card.multBonus = (card.multBonus || 0) + upgradeAtivo.valor;
-    else if (upgradeAtivo.tipo === "clone") gameState.cartasDesbloqueadasRun.push({ ...card });
+    if (upgradeAtivo.tipo === "chips") {
+        card.chipsBonus = (card.chipsBonus || 0) + upgradeAtivo.valor;
+    } else if (upgradeAtivo.tipo === "mult") {
+        card.multBonus = (card.multBonus || 0) + upgradeAtivo.valor;
+    } else if (upgradeAtivo.tipo === "clone") {
+        const clone = JSON.parse(JSON.stringify(card));
+        delete clone.uid;
+        delete clone._novaNaMao;
+        gameState.cartasDesbloqueadasRun.push(clone);
+    } else if (upgradeAtivo.tipo === "edicao") {
+        card.edicao = upgradeAtivo.edicao;
+        if (upgradeAtivo.chipsBonus) card.chipsBonus = (card.chipsBonus || 0) + upgradeAtivo.chipsBonus;
+        if (upgradeAtivo.multBonus) card.multBonus = (card.multBonus || 0) + upgradeAtivo.multBonus;
+    }
 
     if (typeof tocarSfx === "function") tocarSfx("moeda");
     upgradeAtivo = null;
