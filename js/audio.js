@@ -48,14 +48,21 @@ function preCarregarSfx() {
     });
 }
 
+let audioCtx = null;
+
 function destravarAudioContexto() {
     if (audioDestravado) return;
 
-    if (typeof AudioContext !== "undefined" || typeof webkitAudioContext !== "undefined") {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") {
-            audioCtx.resume();
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            if (!audioCtx) audioCtx = new AudioContextClass();
+            if (audioCtx.state === "suspended") {
+                audioCtx.resume().catch(() => {});
+            }
         }
+    } catch (e) {
+        console.warn("[ÁUDIO] WebAudio não suportado ou bloqueado:", e);
     }
 
     const audioTeste = new Audio();
