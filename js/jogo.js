@@ -218,8 +218,8 @@ function mostrarTelaResultado(linhas, total) {
             requestAnimationFrame(passo);
         }, atrasoTotal * 1000);
     }
+    alternarTela("tela-resultado", true);
 
-    alternarTela("tela-resultado");
 }
 
 function gerarPainelColaMaos() {
